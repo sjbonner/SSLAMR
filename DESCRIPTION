@@ -1,12 +1,18 @@
-Package: SSlAMR
+Package: SSLAMR
 Title: Spike and SLab Analysis of Mass-spectra in R
-Version: 231101a
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Version: 23.11.1.1
+Authors@R: c(
+    person("Simon", "Bonner","simon.bonner@uwo.ca", 
+      role = c("aut", "cre"),
+      comment = c(ORCID = "0000-0003-2063-4572")),
+    person("Braedan", "Walker","bwalke67@uwo.ca", 
+      role = "aut"),
+    person("Shi Yu", "Cao","scao85@uwo.ca",
+      role = "aut"))
+Description: Bayesian linear Poisson modelling of mass spectrometry
+  data using spike-and-slab prior distributions to simultaneously
+  identify and quantify compounds present in a sample. 
+License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
