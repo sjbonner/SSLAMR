@@ -5,13 +5,14 @@
 \title{Title}
 \usage{
 sslamr(
-  spectrum,
+  spectrum = NULL,
   candidates = NULL,
   isotope_data = NULL,
   adducts = NULL,
   isoinfo = NULL,
   replace_isoinfo = FALSE,
   min_abundance = 0.001,
+  max_isotopes = Inf,
   group_candidates = TRUE,
   epsilon = 0.05,
   n.chains = 3,
@@ -20,6 +21,7 @@ sslamr(
   n.sampling = 10000,
   prior_par = NULL,
   run_model = TRUE,
+  reload_results = FALSE,
   xlsx_out = NULL,
   verbose = TRUE
 )
@@ -37,6 +39,8 @@ sslamr(
 
 \item{min_abundance}{}
 
+\item{max_isotopes}{}
+
 \item{group_candidates}{If TRUE then group candidates with the same chemical formula.}
 
 \item{epsilon}{}
@@ -52,6 +56,8 @@ sslamr(
 \item{prior_par}{}
 
 \item{run_model}{}
+
+\item{reload_results}{}
 
 \item{xlsx_out}{}
 
