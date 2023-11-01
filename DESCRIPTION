@@ -2,12 +2,12 @@ Package: SSLAMR
 Title: Spike and SLab Analysis of Mass-spectra in R
 Version: 23.11.1.1
 Authors@R: c(
-    person("Simon", "Bonner","simon.bonner@uwo.ca", 
+    person("Simon","Bonner",,"simon.bonner@uwo.ca", 
       role = c("aut", "cre"),
       comment = c(ORCID = "0000-0003-2063-4572")),
-    person("Braedan", "Walker","bwalke67@uwo.ca", 
+    person("Braedan","Walker",,"bwalke67@uwo.ca", 
       role = "aut"),
-    person("Shi Yu", "Cao","scao85@uwo.ca",
+    person("Shi Yu","Cao",,"scao85@uwo.ca",
       role = "aut"))
 Description: Bayesian linear Poisson modelling of mass spectrometry
   data using spike-and-slab prior distributions to simultaneously
