@@ -127,7 +127,7 @@ sslamr_sample <- function(data,
   jags_inits <- lapply(1:n.chains, sslamr_inits, design = design, width = width, counts = counts)
   
   # model
-  model_file <- system.file("JAGS/spike_and_slab_jags.R",package="SSlAMR")
+  model_file <- system.file("JAGS/spike_and_slab_jags.R",package="SSLAMR")
   
   # Initialize model and run adapting phase
   jags_model <- jags.model(model_file,
