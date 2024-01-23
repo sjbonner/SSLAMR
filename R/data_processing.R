@@ -7,6 +7,7 @@ get_iso_info <- function(name,
                          charge, 
                          min_abundance = -Inf, 
                          max_isotopes = Inf,
+                         skip_isotopes = 0,
                          isoinfo = NULL){
   
   if(is.null(isoinfo)){
@@ -23,7 +24,7 @@ get_iso_info <- function(name,
     as_tibble() %>% 
     filter(abundance > min_abundance) %>%
     rowid_to_column(var = "Isotope") %>%
-    filter(Isotope <= max_isotopes) %>%
+    filter(Isotope > skip_isotopes, Isotope <= max_isotopes + skip_isotopes) %>%
     add_column(ID=name, Charge = charge, .before=1) %>%
     rename(Mass = centroidMass,
            Abund = abundance)
@@ -46,41 +47,55 @@ round_bernoulli <- function(counts, ran.seed = unclass(Sys.time())){
 candidate_info <- function(candidates, 
                            min_abundance = .001, 
                            max_isotopes = Inf,
+                           skip_isotopes = 0,
+                           min_mass_charge = -Inf,
+                           max_mass_charge = Inf,
                            isoinfo = NULL){
   candidates %>%
     rowwise() %>%
     do(get_iso_info(.$Name, .$Formula, .$Charge, 
                     min_abundance = min_abundance, 
                     max_isotopes = max_isotopes,
+                    skip_isotopes = skip_isotopes,
                     isoinfo = isoinfo)) %>%
     ungroup() %>%
-    mutate(Mass = (Mass - Charge * 0.000548579909)/abs(Charge))
+    mutate(Mass = (Mass - Charge * 0.000548579909)/abs(Charge)) %>%
+    filter(Mass >= min_mass_charge, Mass <= max_mass_charge)
 }
 
 # lipid bins: defines the boundaries of the bins for creating
 # the design matrix
-create_bins <- function(isotope_df, epsilon = .05){
-  isotope_df %>%
-    arrange(Mass) %>%
-    mutate(diff = Mass-lag(Mass),
-           step = ifelse(is.na(diff), 0, diff > epsilon),
-           Group = cumsum(step) + 1) %>%
+create_bins <- function(isotope_df, epsilon = .05, min_mass_charge = 0, max_mass_charge = 1000){
+  
+  bins1 <- tibble(Mass = sort(unique(pull(isotope_df,"Mass")))) %>%
+    mutate(Delta = Mass - lag(Mass, default = 0),
+           Increment = Delta > 2 * epsilon,
+           Group = cumsum(Increment)) %>%
     group_by(Group) %>%
-    mutate(GroupMass = round(mean(Mass)/epsilon)*epsilon,
-           Lower = min(Mass) - epsilon/2,
-           Upper = max(Mass) + epsilon/2) %>%
-    dplyr::select(-diff, -step) %>%
-    ungroup() %>%
-    arrange(ID,Isotope)
+    summarize(Isotopes = n(),
+              Mean = mean(Mass),
+              Lower = min(Mass) - epsilon,
+              Upper = max(Mass) + epsilon,
+              .groups = "drop") %>%
+    select(-Group)
+  
+  bins2 <- tibble(Lower = c(min_mass_charge,pull(bins1,"Upper")),
+                  Upper = c(pull(bins1, Lower), max_mass_charge),
+                  Isotopes = 0,
+                  Mean = NA)
+  
+  bind_rows(bins1,bins2) %>%
+    arrange(Lower) %>%
+    rowid_to_column("Group") %>%
+    mutate(Width = Upper - Lower)
 }
-
 
 # this function takes the output from lipids_info and 
 # creates the design matrix
-build_design <- function(lip_df, epsilon=0.05){
+build_design <- function(candidate_bins, epsilon=0.05){
   
-  design <- lip_df %>%
-    complete(ID,nesting(GroupMass,Group),fill = list(Isotope = NA, Abund = 0)) %>%
+  design <- candidate_bins %>%
+    complete(ID,Group,fill = list(Isotope = NA, Abund = 0)) %>%
     arrange(ID) %>%
     dplyr::select(-Isotope,-Mass) %>%
     group_by(ID,Group) %>%
@@ -91,8 +106,8 @@ build_design <- function(lip_df, epsilon=0.05){
   return(design)
 }
 
-peaks_to_bins <- function(peaks, bins, MC = "Mass", lower = "Lower", upper = "Upper"){
-  # Assign peaks to bins
+assign_to_bins <- function(peaks, bins, MC = "Mass", lower = "Lower", upper = "Upper"){
+  # Assign quantities to bins
   peaks %>%
     mutate(Group = findInterval(.data[[MC]], sort(c(-Inf,bins[[lower]],bins[[upper]],Inf))),
            Group = ifelse(Group %% 2 == 0, Group/2, NA))
@@ -133,10 +148,21 @@ sslamr_data <- function(MS,
                         isotope_data = NULL,
                         min_abundance = .001,
                         max_isotopes = Inf,
+                        skip_isotopes = 0,
                         epsilon=0.05, 
+                        min_mass_charge = NULL,
+                        max_mass_charge = NULL,
                         ran.seed=unclass(Sys.time()),
                         isoinfo = NULL,
                         verbose = FALSE){
+  
+  # Set default range for mass/charge
+  if(is.null(min_mass_charge)){
+    min_mass_charge <- 0
+  }
+  if(is.null(max_mass_charge)){
+    max_mass_charge <- max(MS$`Mass/Charge` + 2 * epsilon)
+  }
   
   # Process candidate molecules
   
@@ -148,23 +174,23 @@ sslamr_data <- function(MS,
     isotope_data <- candidate_info(candidates, 
                                    min_abundance = min_abundance,
                                    max_isotopes = max_isotopes,
+                                   skip_isotopes = skip_isotopes,
+                                   min_mass_charge = min_mass_charge,
+                                   max_mass_charge = max_mass_charge,
                                    isoinfo = isoinfo)
   }
   
-  # 2) Assign candidates to bins
+  # 2) Define bins
   if(verbose)
-    message("  Binning candidate isotopes...")
-  candidate_bins <- create_bins(isotope_data, epsilon)
+    message("  Defining bins...")
+  bins <- create_bins(isotope_data, 
+                      epsilon, 
+                      min_mass_charge = min_mass_charge,
+                      max_mass_charge = max_mass_charge)
   
-  # 3) Summarize bin information
-  bins <- candidate_bins %>%
-    group_by(Group) %>%
-    summarize(Isotopes = n(), 
-              Mass = GroupMass[1],
-              Lower = Lower[1],
-              Upper = Upper[1],
-              Width = Upper[1] - Lower[1]) %>%
-    ungroup()
+  # 3) Assign isotopes to bins
+  candidate_bins <- isotope_data %>%
+    assign_to_bins(bins,"Mass")
   
   # 4) Construct design matrix 
   if(verbose)
@@ -181,8 +207,9 @@ sslamr_data <- function(MS,
   
   MS <- MS %>% 
     filter(Intensity > 0) %>% # Remove peaks with zero intensity
+    filter(`Mass/Charge` >= min_mass_charge, `Mass/Charge` <= max_mass_charge) %>% # Restrict to analysis window
     mutate(Count = Intensity * ccf) %>% # Convert intensity to count
-    peaks_to_bins(bins, "Mass/Charge")
+    assign_to_bins(bins, "Mass/Charge")
   
   # 2) Summarize counts within bins
   counts <- summarize_counts(MS, bins, ran.seed = ran.seed)
@@ -190,7 +217,8 @@ sslamr_data <- function(MS,
   data <- bins %>% 
     full_join(counts, by = "Group") %>%
     full_join(design, by = "Group") %>%
-    arrange(Group)
+    arrange(Group) %>%
+    mutate(across(!c(Group, Isotopes, Mean, Lower, Upper, Width, Peaks, Count), ~replace_na(.x, 0)))
   
   # Return complete output
   list(candidates = candidate_bins,

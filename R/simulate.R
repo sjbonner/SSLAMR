@@ -1,0 +1,52 @@
+sslamr_simulate <- function(candidates, 
+                            isoinfo = NULL,
+                            mc_cal_error,
+                            mc_sd,
+                            mc_min_diff,
+                            intercept,
+                            mc_min,
+                            mc_max){
+  
+  # Generate isotope information
+  isotopes <- candidate_info(candidates, isoinfo = isoinfo)
+  
+  # Generate counts
+  spectrum <- candidates %>%
+    select(ID = Name, Abundance) %>%
+    full_join(isotopes, by = "ID") %>%
+    group_by(ID, ) %>%
+    mutate(Count = rpois(n(),Abundance * Abund/sum(Abund))) %>%
+    ungroup() %>%
+    filter(Count > 0)
+  
+  # Add MC error
+  spectrum <- spectrum %>%
+    mutate(Mass = Mass + mc_cal_error + rnorm(n(), 0, mc_sd))
+  
+  # Add noise
+  n_val <- rpois(1, (mc_max - mc_min) * intercept)
+  
+  spectrum <- spectrum %>%
+    bind_rows(tibble(ID = paste0("Dummy",as.character(1:n_val)),
+                     Mass = sort(runif(n_val, mc_min, mc_max)),
+                     Count = 1,
+                     Isotope = 1))
+  
+  
+  # Group nearby observations
+  bins <- spectrum %>%
+    create_bins(epsilon = mc_min_diff) 
+  
+  spectrum <- spectrum %>%
+    assign_to_bins(bins) %>%
+    group_by(Group) %>%
+    summarize(Mass = round(sum(Mass * Count)/sum(Count),5),
+              Count = sum(Count)) %>%
+    arrange(Mass)
+  
+  # Return spectrum
+  spectrum %>%
+    select(`Mass/Charge` = Mass, Intensity = Count) %>%
+    arrange(`Mass/Charge`)
+  
+}

@@ -7,7 +7,7 @@ sslamr_inits <- function(chain,
   
   if(chain == 1){
     ## Everything present in equal amounts
-    beta0 <- 0
+    beta0 <- 0.1
     beta_tmp <- rep(mean(counts),K)
     gamma <- rep(1, K)
   }
@@ -64,7 +64,12 @@ sslamr_sample <- function(data,
                           n.adapt = 1000, 
                           n.burnin = 1000,
                           n.sampling = 10000,
-                          prior_par = NULL){
+                          prior_par = NULL,
+                          model = "hierarchical"){
+  
+  # Argument checks
+  if(!model %in% c("hierarchical","log_hierarchical","simple"))
+    stop("The argument `model` must be one of 'log_hierarchical', 'hierarchical' or 'simple'.")
   
   # Set default prior parameters
   if(is.null(prior_par$beta0))
@@ -78,7 +83,7 @@ sslamr_sample <- function(data,
   
   # Extract data values
   design <- data$data %>%
-    select(-Group, -Isotopes, - Mass, -Lower, 
+    select(-Group, -Isotopes, - Mean, -Lower, 
            -Upper, -Width, - Peaks, -Count) %>%
     as.matrix()
   
@@ -108,26 +113,51 @@ sslamr_sample <- function(data,
     ungroup() %>%
     select(-row) %>%
     as.matrix()
+  
+  index1 <- unique(pull(slot_list,"row"))
+  
+  index2 <- (1:nrow(design))[-index1]
     
-  jags_data <- list(n = n,
+  jags_data <- list(n1 = length(index1),
+                    n2 = length(index2),
+                    index1 = index1,
+                    index2 = index2,
                     K = K,
                     width = width,
-                    X = design,
+                    X = design[index1,],
                     slots = slot_mat,
                     nslots = nslots,
-                    y = counts,
-                    beta0_mu = prior_par$beta0$mu,
-                    beta0_sd = prior_par$beta0$sd,
-                    beta_tmp_mu = prior_par$beta_tmp$mu,
-                    beta_tmp_sd_k = prior_par$beta_tmp_sd$k,
-                    beta_tmp_sd_tau = prior_par$beta_tmp_sd$tau,
-                    gamma_p = prior_par$gamma$p)
+                    y = counts)
+  
+  # Add prior parameters to data
+  if(model %in% c("hierarchical","log_hierarchical"))
+    jags_data <- c(jags_data,
+                   beta0_mu = prior_par$beta0$mu,
+                   beta0_sd = prior_par$beta0$sd,
+                   beta_tmp_mu = prior_par$beta_tmp$mu,
+                   beta_tmp_sd_k = prior_par$beta_tmp_sd$k,
+                   beta_tmp_sd_tau = prior_par$beta_tmp_sd$tau,
+                   gamma_p = prior_par$gamma$p)
+  else if(model == "simple")
+    jags_data <- c(jags_data,
+                   beta0_mu = prior_par$beta0$mu,
+                   beta0_sd = prior_par$beta0$sd,
+                   beta_tmp_k = prior_par$beta_tmp$k,
+                   beta_tmp_sd = prior_par$beta_tmp$sd,
+                   gamma_p = prior_par$gamma$p)
   
   # Set initial values
   jags_inits <- lapply(1:n.chains, sslamr_inits, design = design, width = width, counts = counts)
   
   # model
-  model_file <- system.file("JAGS/spike_and_slab_jags.R",package="SSLAMR")
+  if(model == "hierarchical")
+    model_file <- system.file("JAGS/spike_and_slab_jags_hierarchical.R",package="SSlAMR")
+  else if(model == "log_hierarchical")
+    model_file <- system.file("JAGS/spike_and_slab_jags_log_hierarchical.R",package="SSlAMR")
+  else if(model == "simple")
+    model_file <- system.file("JAGS/spike_and_slab_jags_simple.R",package="SSlAMR")
+  else
+    stop("Unknown model ",model,".")
   
   # Initialize model and run adapting phase
   jags_model <- jags.model(model_file,
@@ -176,6 +206,9 @@ sslamr_sample <- function(data,
 #' @param group_candidates If TRUE then group candidates with the same chemical formula.
 #' @param max_isotopes 
 #' @param reload_results 
+#' @param skip_isotopes 
+#' @param min_mass_charge 
+#' @param max_mass_charge 
 #'
 #' @importFrom writexl write_xlsx
 #' @importFrom tictoc tic toc
@@ -191,19 +224,23 @@ sslamr <- function(spectrum = NULL,
                    replace_isoinfo = FALSE,
                    min_abundance = .001,
                    max_isotopes = Inf,
+                   skip_isotopes = 0,
                    group_candidates = TRUE,
                    epsilon = .05,
+                   min_mass_charge = NULL,
+                   max_mass_charge = NULL,
                    n.chains = 3,
                    n.adapt = 1000,
                    n.burnin = 1000,
                    n.sampling = 10000,
                    prior_par = NULL,
+                   model = "hierarchical",
                    run_model = TRUE,
                    reload_results = FALSE,
                    xlsx_out = NULL,
                    verbose = TRUE){
   
-  if(!reload_results){  # if reload_results = FALSE
+  if(!reload_results){
     # Check input
     if (is.null(spectrum))
       stop("You must supply the spectrum data.")
@@ -272,7 +309,11 @@ sslamr <- function(spectrum = NULL,
                         candidates = candidates,
                         isotope_data = isotope_data,
                         min_abundance = min_abundance,
+                        max_isotopes = max_isotopes,
+                        skip_isotopes = skip_isotopes,
                         epsilon = epsilon, 
+                        min_mass_charge = min_mass_charge,
+                        max_mass_charge = max_mass_charge,
                         isoinfo = isoinfo,
                         verbose = verbose)
     
@@ -284,7 +325,8 @@ sslamr <- function(spectrum = NULL,
                                 n.chains = n.chains,
                                 n.burnin = n.burnin,
                                 n.sampling = n.sampling,
-                                prior_par = prior_par)
+                                prior_par = prior_par,
+                                model = model)
       
       # Convert burnin to data frame
       b.df <- get_samples_df(ss.model$burnin)
@@ -337,87 +379,56 @@ sslamr <- function(spectrum = NULL,
       
       fit.summ <- as_tibble(cbind(fit.summ, EffectiveSize=eff.size))
       if(verbose) toc()
-      
-    }  # closes if(run_model)
-    
-    
-    # package results
-    parameters <- tibble(min_abundance = .001,
-                         epsilon = epsilon,
-                         n_chains = 3,
-                         n_adapt = n.adapt,
-                         n_burnin = n.burnin,
-                         n_sampling  = n.sampling) %>%
-      pivot_longer(everything(), names_to = "Parameter", values_to = "Value")
-    
-    if(run_model){  # if run_model = TRUE
-      results <- list(data = data,
-                      convergence = convergence,
-                      burnin = b.df,
-                      samples = s.df,
-                      coefficients = bg.summ,
-                      intercept = int.summ,
-                      beta_sd = beta_sd.summ,
-                      fitted = fit.summ,
-                      parameters = parameters)
     }
-    else {  # if run_model = FALSE
-      results <- list(data = data,
-                      parameters = parameters)
-    }
+
+  # package results
+  parameters <- tibble(min_abundance = min_abundance,
+                       epsilon = epsilon,
+                       min_mass_charge = min_mass_charge,
+                       max_mass_charge = max_mass_charge,
+                       n_chains = n.chains,
+                       n_adapt = n.adapt,
+                       n_burnin = n.burnin,
+                       n_sampling  = n.sampling) %>%
+    pivot_longer(everything(), names_to = "Parameter", values_to = "Value")
+
+  if(run_model){
+    results <- list(data=data,
+                    convergence = convergence,
+                    burnin = b.df,
+                    samples = s.df,
+                    coefficients=bg.summ,
+                    beta_sd = beta_sd.summ,
+                    intercept = int.summ,
+                    fitted = fit.summ,
+                    parameters = parameters)
+  }
+  else {
+    results <- list(data = data,
+                   parameters = parameters)
+  }
     
-    if(!is.null(xlsx_out)){
-      ## Save formatted output to Excel spreadsheet
+  if(!is.null(xlsx_out)){
+    ## Save formatted output to Excel spreadsheet
       if(run_model){
-        xlsx_output <- list(candidates = results$data$candidates,
-                            bins = results$data$bins,
-                            MS = results$data$MS,
-                            data = results$data$data,
-                            coefficients = results$coefficients,
-                            intercept = results$intercept,
-                            beta_sd = results$beta_sd,
-                            fitted = results$fitted,
-                            parameters = parameters)
-        
+        xlsx_output <- c(results$data,
+                         list(coefficients = bg.summ,
+                              intercept = int.summ,
+                              beta_sd = beta_sd.summ,
+                              fitted = fit.summ,
+                              parameters = parameters))
       }
       else{
-        # browser()
-        
-        xlsx_output <- list(candidates = results$data$candidates,
-                            bins = results$data$bins,
-                            MS = results$data$MS,
-                            data = results$data$data,
-                            parameters = parameters)
+        xlsx_output <- c(results$data,
+                         list(parameters = parameters))
       }
       
-      # browser()
-      
-      write_xlsx(xlsx_output, xlsx_out)
-    }  # closes if(!is.null(xlsx_out))
-    
-    # package results
-    # if(run_model){
-    #   results <- list(data = data,
-    #                   convergence = convergence,
-    #                   burnin = b.df,
-    #                   samples = s.df,
-    #                   bg.summ = bg.summ,
-    #                   beta_sd.summ = beta_sd.summ,
-    #                   int.summ = int.summ,
-    #                   fit.summ = fit.summ)
-    # }
-    # else {
-    #   results <- list(data = data)
-    # }
-    
-    # fit.summ <- as_tibble(cbind(fit.summ, EffectiveSize=eff.size))
-    # if(verbose) toc()
-    
-  }  # closes if(!reload_results)
+      write_xlsx(xlsx_output,xlsx_out)
+    }
+  }
   
-  else{  # if reload_results = TRUE
-    
-    # browser()
+  else{
+    # Reload existing results
     
     # Check for output file
     if(is.null(xlsx_out))
@@ -426,23 +437,17 @@ sslamr <- function(spectrum = NULL,
     if(!file.exists(xlsx_out))
       stop("The file ",xlsx_out,"does not exist.")
     
-    if(verbose) message("Loading existing results (", xlsx_out, ")")
-    
-    results <- list(candidates = read_xlsx(xlsx_out, sheet = "candidates"),
-                    bins = read_xlsx(xlsx_out, sheet = "bins"),
-                    MS = read_xlsx(xlsx_out, sheet = "MS"),
-                    data = read_xlsx(xlsx_out, sheet = "data"),
-                    coefficients = read_xlsx(xlsx_out, sheet = "coefficients"),
-                    intercept = read_xlsx(xlsx_out, sheet = "intercept"),
-                    beta_sd = read_xlsx(xlsx_out, sheet = "beta_sd"),
-                    fitted = read_xlsx(xlsx_out, sheet = "fitted"),
-                    parameters = read_xlsx(xlsx_out, sheet = "parameters"))
+    results <- list(candidates = read_xlsx(xlsx_out,sheet = "candidates"),
+                    bins = read_xlsx(xlsx_out,sheet = "bins"),
+                    MS = read_xlsx(xlsx_out,sheet = "MS"),
+                    data = read_xlsx(xlsx_out,sheet = "data"),
+                    coefficients = read_xlsx(xlsx_out,sheet = "coefficients"),
+                    intercept = read_xlsx(xlsx_out,sheet = "intercept"),
+                    beta_sd = read_xlsx(xlsx_out,sheet = "beta_sd"),
+                    fitted = read_xlsx(xlsx_out,sheet = "fitted"))
   }
-  
-  
-
   
   # Return output
   return(results)
-  
 }
+  

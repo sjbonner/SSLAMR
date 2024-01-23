@@ -6,4 +6,5 @@
 #' @import tibble
 #' @import rjags
 #' @import readxl
+#' @importFrom glmnet glmnet
 NULL

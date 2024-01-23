@@ -42,9 +42,10 @@ intercept_summ <- function(samp_df){
 
 beta.gamma_summ <- function(samp_df, candidates){
   candidate_names <- candidates %>%
-    filter(Isotope == 1) %>%
-    pull("ID")
-  
+    pull("ID") %>%
+    unique() %>%
+    sort()
+    
   samples_beta_gamma <- samp_df %>%
     select(Chain, Iteration, starts_with("beta["),starts_with("gamma["))%>%
     pivot_longer(c(starts_with("beta"),starts_with("gamma")),
@@ -57,7 +58,6 @@ beta.gamma_summ <- function(samp_df, candidates){
   
   
   summ_beta_gamma <- samples_beta_gamma %>%
-    filter(Name > 0) %>%
     group_by(Name) %>%
     summarize(P_present = mean(gamma),
               P_absent = 1 - P_present,
@@ -77,14 +77,14 @@ fitted_summ <- function(samp_df, data){
     select(Chain, Iteration, starts_with("mu")) %>%
     pivot_longer(starts_with("mu"),names_to = "Parameter", values_to = "Fitted") %>%
     mutate(Group = as.integer(str_extract(Parameter,"[0-9]+"))) %>%
-    full_join(select(data,Group,Mass,Count), by = "Group") %>%
+    full_join(select(data,Group,Mean,Count), by = "Group") %>%
     group_by(Chain, Iteration) %>%
     mutate(Residual = Count - Fitted,
            Pearson = Residual / sqrt(Fitted)) %>%
     ungroup()
   
   mu_summ <- samples_mu %>%
-    group_by(Group, Mass, Count) %>%
+    group_by(Group, Mean, Count) %>%
     summarize(MeanFitted = mean(Fitted),
               Q2.5Fitted = quantile(Fitted,.025),
               Q25Fitted = quantile(Fitted,.25),
