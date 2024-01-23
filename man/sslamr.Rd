@@ -13,13 +13,17 @@ sslamr(
   replace_isoinfo = FALSE,
   min_abundance = 0.001,
   max_isotopes = Inf,
+  skip_isotopes = 0,
   group_candidates = TRUE,
   epsilon = 0.05,
+  min_mass_charge = NULL,
+  max_mass_charge = NULL,
   n.chains = 3,
   n.adapt = 1000,
   n.burnin = 1000,
   n.sampling = 10000,
   prior_par = NULL,
+  model = "hierarchical",
   run_model = TRUE,
   reload_results = FALSE,
   xlsx_out = NULL,
@@ -41,9 +45,15 @@ sslamr(
 
 \item{max_isotopes}{}
 
+\item{skip_isotopes}{}
+
 \item{group_candidates}{If TRUE then group candidates with the same chemical formula.}
 
 \item{epsilon}{}
+
+\item{min_mass_charge}{}
+
+\item{max_mass_charge}{}
 
 \item{n.chains}{}
 

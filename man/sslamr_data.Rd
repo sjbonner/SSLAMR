@@ -10,7 +10,10 @@ sslamr_data(
   isotope_data = NULL,
   min_abundance = 0.001,
   max_isotopes = Inf,
+  skip_isotopes = 0,
   epsilon = 0.05,
+  min_mass_charge = NULL,
+  max_mass_charge = NULL,
   ran.seed = unclass(Sys.time()),
   isoinfo = NULL,
   verbose = FALSE
