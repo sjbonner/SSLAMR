@@ -24,8 +24,10 @@ Imports:
     readr,
     readxl,
     rjags,
+    stats,
     stringr,
     tibble,
     tictoc,
     tidyr,
+    utils,
     writexl
