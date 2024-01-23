@@ -1,7 +1,3 @@
-
-# This function takes the name and lipid attained from
-# get_PC_formula gets its isotope distribution from ecipex
-# Could use improvement
 get_iso_info <- function(name, 
                          formula, 
                          charge, 
