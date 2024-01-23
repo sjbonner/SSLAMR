@@ -151,11 +151,11 @@ sslamr_sample <- function(data,
   
   # model
   if(model == "hierarchical")
-    model_file <- system.file("JAGS/spike_and_slab_jags_hierarchical.R",package="SSlAMR")
+    model_file <- system.file("JAGS/spike_and_slab_jags_hierarchical.R",package="SSLAMR")
   else if(model == "log_hierarchical")
-    model_file <- system.file("JAGS/spike_and_slab_jags_log_hierarchical.R",package="SSlAMR")
+    model_file <- system.file("JAGS/spike_and_slab_jags_log_hierarchical.R",package="SSLAMR")
   else if(model == "simple")
-    model_file <- system.file("JAGS/spike_and_slab_jags_simple.R",package="SSlAMR")
+    model_file <- system.file("JAGS/spike_and_slab_jags_simple.R",package="SSLAMR")
   else
     stop("Unknown model ",model,".")
   
