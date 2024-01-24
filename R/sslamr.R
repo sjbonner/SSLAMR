@@ -444,7 +444,8 @@ sslamr <- function(spectrum = NULL,
                     coefficients = read_xlsx(xlsx_out,sheet = "coefficients"),
                     intercept = read_xlsx(xlsx_out,sheet = "intercept"),
                     beta_sd = read_xlsx(xlsx_out,sheet = "beta_sd"),
-                    fitted = read_xlsx(xlsx_out,sheet = "fitted"))
+                    fitted = read_xlsx(xlsx_out,sheet = "fitted"),
+                    parameters = read_xlsx(xlsx_out,sheet = "parameters"))
   }
   
   # Return output
