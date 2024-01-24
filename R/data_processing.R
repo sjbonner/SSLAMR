@@ -66,14 +66,14 @@ create_bins <- function(isotope_df, epsilon = .05, min_mass_charge = 0, max_mass
   bins1 <- tibble(Mass = sort(unique(pull(isotope_df,"Mass")))) %>%
     mutate(Delta = Mass - lag(Mass, default = 0),
            Increment = Delta > 2 * epsilon,
-           Group = cumsum(Increment)) %>%
-    group_by(Group) %>%
+           Interval = cumsum(Increment)) %>%
+    group_by(Interval) %>%
     summarize(Isotopes = n(),
               Lower = min(Mass) - epsilon,
               Upper = max(Mass) + epsilon,
               Centre = (Upper + Lower)/2,
               .groups = "drop") %>%
-    select(-Group)
+    select(-Interval)
   
   bins2 <- tibble(Lower = c(min_mass_charge,pull(bins1,"Upper")),
                   Upper = c(pull(bins1, Lower), max_mass_charge),
@@ -82,7 +82,7 @@ create_bins <- function(isotope_df, epsilon = .05, min_mass_charge = 0, max_mass
   
   bind_rows(bins1,bins2) %>%
     arrange(Lower) %>%
-    rowid_to_column("Group") %>%
+    rowid_to_column("Interval") %>%
     mutate(Width = Upper - Lower)
 }
 
@@ -91,10 +91,10 @@ create_bins <- function(isotope_df, epsilon = .05, min_mass_charge = 0, max_mass
 build_design <- function(candidate_bins, epsilon=0.05){
   
   design <- candidate_bins %>%
-    complete(ID,Group,fill = list(Isotope = NA, Abund = 0)) %>%
+    complete(ID,Interval,fill = list(Isotope = NA, Abund = 0)) %>%
     arrange(ID) %>%
     dplyr::select(-Isotope,-Mass) %>%
-    group_by(ID,Group) %>%
+    group_by(ID,Interval) %>%
     summarize(Abund = sum(Abund)) %>%
     ungroup() %>%
     pivot_wider(names_from = ID, values_from = Abund)
@@ -105,8 +105,8 @@ build_design <- function(candidate_bins, epsilon=0.05){
 assign_to_bins <- function(peaks, bins, MC = "Mass", lower = "Lower", upper = "Upper"){
   # Assign quantities to bins
   peaks %>%
-    mutate(Group = findInterval(.data[[MC]], sort(c(-Inf,bins[[lower]],bins[[upper]],Inf))),
-           Group = ifelse(Group %% 2 == 0, Group/2, NA))
+    mutate(Interval = findInterval(.data[[MC]], sort(c(-Inf,bins[[lower]],bins[[upper]],Inf))),
+           Interval = ifelse(Interval %% 2 == 0, Interval/2, NA))
 }
 
 summarize_counts <- function(MS, bins, epsilon=0.05, ran.seed=unclass(Sys.time())){
@@ -114,14 +114,14 @@ summarize_counts <- function(MS, bins, epsilon=0.05, ran.seed=unclass(Sys.time()
   # Round counts and sum within bins
   MS <- MS %>%
     mutate(Count = round_bernoulli(Count, ran.seed = ran.seed)) %>%
-    group_by(Group) %>%
+    group_by(Interval) %>%
     summarize(Peaks = n(),
               Count = sum(Count))
   
   # Complete table with empty bins
   bins %>%
-    select(Group) %>%
-    left_join(MS, by = "Group") %>%
+    select(Interval) %>%
+    left_join(MS, by = "Interval") %>%
     replace_na(list(Peaks = 0, Count = 0))
 }
 
@@ -211,10 +211,10 @@ sslamr_data <- function(MS,
   counts <- summarize_counts(MS, bins, ran.seed = ran.seed)
   
   data <- bins %>% 
-    full_join(counts, by = "Group") %>%
-    full_join(design, by = "Group") %>%
-    arrange(Group) %>%
-    mutate(across(!c(Group, Isotopes, Centre, Lower, Upper, Width, Peaks, Count), ~replace_na(.x, 0)))
+    full_join(counts, by = "Interval") %>%
+    full_join(design, by = "Interval") %>%
+    arrange(Interval) %>%
+    mutate(across(!c(Interval, Isotopes, Centre, Lower, Upper, Width, Peaks, Count), ~replace_na(.x, 0)))
   
   # Return complete output
   list(candidates = candidate_bins,
@@ -231,15 +231,15 @@ prescreen <- function(candidates, MS, prescreen){
   
   # Compute average count in bins with positive abundance for each candidate
   tmp <- design %>% 
-    pivot_longer(-Group,names_to = "Name",values_to = "Abundance") %>% 
-    left_join(counts,by = "Group") %>% 
+    pivot_longer(-Interval,names_to = "Name",values_to = "Abundance") %>% 
+    left_join(counts,by = "Interval") %>% 
     group_by(Name) %>% 
     mutate(Count_Avg = mean(Count[Abundance > 0])) 
   
   # Retain candidates with average counts greater than prescreen
   design <- tmp %>% 
     filter(Count_Avg >= prescreen) %>%
-    select(Group, Name, Abundance) %>%
+    select(Interval, Name, Abundance) %>%
     pivot_wider(names_from = Name, values_from = Abundance)
   
   nout <- ncol(design) - 1

@@ -83,7 +83,7 @@ sslamr_sample <- function(data,
   
   # Extract data values
   design <- data$data %>%
-    select(-Group, -Isotopes, - Centre, -Lower, 
+    select(-Interval, -Isotopes, - Centre, -Lower, 
            -Upper, -Width, - Peaks, -Count) %>%
     as.matrix()
   
@@ -438,7 +438,7 @@ sslamr <- function(spectrum = NULL,
       stop("The file ",xlsx_out,"does not exist.")
     
     results <- list(candidates = read_xlsx(xlsx_out,sheet = "candidates"),
-                    bins = read_xlsx(xlsx_out,sheet = "bins"),
+                    intervals = read_xlsx(xlsx_out,sheet = "bins"),
                     spectrum = read_xlsx(xlsx_out,sheet = "MS"),
                     data = read_xlsx(xlsx_out,sheet = "data"),
                     coefficients = read_xlsx(xlsx_out,sheet = "coefficients"),
