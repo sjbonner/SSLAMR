@@ -83,7 +83,7 @@ sslamr_sample <- function(data,
   
   # Extract data values
   design <- data$data %>%
-    select(-Group, -Isotopes, - Mean, -Lower, 
+    select(-Group, -Isotopes, - Centre, -Lower, 
            -Upper, -Width, - Peaks, -Count) %>%
     as.matrix()
   

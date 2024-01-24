@@ -69,16 +69,16 @@ create_bins <- function(isotope_df, epsilon = .05, min_mass_charge = 0, max_mass
            Group = cumsum(Increment)) %>%
     group_by(Group) %>%
     summarize(Isotopes = n(),
-              Mean = mean(Mass),
               Lower = min(Mass) - epsilon,
               Upper = max(Mass) + epsilon,
+              Centre = (Upper + Lower)/2,
               .groups = "drop") %>%
     select(-Group)
   
   bins2 <- tibble(Lower = c(min_mass_charge,pull(bins1,"Upper")),
                   Upper = c(pull(bins1, Lower), max_mass_charge),
                   Isotopes = 0,
-                  Mean = NA)
+                  Centre = (Upper + Lower)/2)
   
   bind_rows(bins1,bins2) %>%
     arrange(Lower) %>%
@@ -214,7 +214,7 @@ sslamr_data <- function(MS,
     full_join(counts, by = "Group") %>%
     full_join(design, by = "Group") %>%
     arrange(Group) %>%
-    mutate(across(!c(Group, Isotopes, Mean, Lower, Upper, Width, Peaks, Count), ~replace_na(.x, 0)))
+    mutate(across(!c(Group, Isotopes, Centre, Lower, Upper, Width, Peaks, Count), ~replace_na(.x, 0)))
   
   # Return complete output
   list(candidates = candidate_bins,
