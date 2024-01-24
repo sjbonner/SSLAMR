@@ -109,10 +109,10 @@ assign_to_bins <- function(peaks, bins, MC = "Mass", lower = "Lower", upper = "U
            Interval = ifelse(Interval %% 2 == 0, Interval/2, NA))
 }
 
-summarize_counts <- function(MS, bins, epsilon=0.05, ran.seed=unclass(Sys.time())){
+summarize_counts <- function(spectrum, bins, epsilon=0.05, ran.seed=unclass(Sys.time())){
   
   # Round counts and sum within bins
-  MS <- MS %>%
+  spectrum <- spectrum %>%
     mutate(Count = round_bernoulli(Count, ran.seed = ran.seed)) %>%
     group_by(Interval) %>%
     summarize(Peaks = n(),
@@ -121,13 +121,13 @@ summarize_counts <- function(MS, bins, epsilon=0.05, ran.seed=unclass(Sys.time()
   # Complete table with empty bins
   bins %>%
     select(Interval) %>%
-    left_join(MS, by = "Interval") %>%
+    left_join(spectrum, by = "Interval") %>%
     replace_na(list(Peaks = 0, Count = 0))
 }
 
 #' Data processing
 #'
-#' @param MS Data frame of observed peaks with columns: Mass/Charge (numeric) and Intensity (numeric).
+#' @param spectrum Data frame of observed peaks with columns: Mass/Charge (numeric) and Intensity (numeric).
 #' @param candidates Data from of candidate molecules with columns: Name (character) and Formula (character).
 #' @param epsilon Resolution (default = .05)
 #' @param ran.seed Random seed for rounding counts (integer)
@@ -136,10 +136,10 @@ summarize_counts <- function(MS, bins, epsilon=0.05, ran.seed=unclass(Sys.time()
 #' @param isoinfo 
 #'
 #' @return List with 5 components: candidates -- an augmented data frame with the candidate information, 
-#' bins -- data frame with bin information, MS -- augmented data frame with peak data, design -- design matrix, counts -- vector of summed counts for each bin 
+#' intervals -- data frame with interval information, spectrum -- augmented data frame with peak data, design -- design matrix, counts -- vector of summed counts for each bin 
 #' @export
 #'
-sslamr_data <- function(MS, 
+sslamr_data <- function(spectrum, 
                         candidates = NULL,
                         isotope_data = NULL,
                         min_abundance = .001,
@@ -157,7 +157,7 @@ sslamr_data <- function(MS,
     min_mass_charge <- 0
   }
   if(is.null(max_mass_charge)){
-    max_mass_charge <- max(MS$`Mass/Charge` + 2 * epsilon)
+    max_mass_charge <- max(spectrum$`Mass/Charge` + 2 * epsilon)
   }
   
   # Process candidate molecules
@@ -179,14 +179,14 @@ sslamr_data <- function(MS,
   # 2) Define bins
   if(verbose)
     message("  Defining bins...")
-  bins <- create_bins(isotope_data, 
-                      epsilon, 
-                      min_mass_charge = min_mass_charge,
-                      max_mass_charge = max_mass_charge)
+  intervals <- create_bins(isotope_data, 
+                           epsilon, 
+                           min_mass_charge = min_mass_charge,
+                           max_mass_charge = max_mass_charge)
   
   # 3) Assign isotopes to bins
   candidate_bins <- isotope_data %>%
-    assign_to_bins(bins,"Mass")
+    assign_to_bins(intervals,"Mass")
   
   # 4) Construct design matrix 
   if(verbose)
@@ -199,18 +199,18 @@ sslamr_data <- function(MS,
   if(verbose)
     message("  Assigning peaks to bins...")
   
-  ccf <- 1 / (MS %>% filter(Intensity > 0) %>% pull("Intensity") %>% min())
+  ccf <- 1 / (spectrum %>% filter(Intensity > 0) %>% pull("Intensity") %>% min())
   
-  MS <- MS %>% 
+  spectrum <- spectrum %>% 
     filter(Intensity > 0) %>% # Remove peaks with zero intensity
     filter(`Mass/Charge` >= min_mass_charge, `Mass/Charge` <= max_mass_charge) %>% # Restrict to analysis window
     mutate(Count = Intensity * ccf) %>% # Convert intensity to count
-    assign_to_bins(bins, "Mass/Charge")
+    assign_to_bins(intervals, "Mass/Charge")
   
   # 2) Summarize counts within bins
-  counts <- summarize_counts(MS, bins, ran.seed = ran.seed)
+  counts <- summarize_counts(spectrum, intervals, ran.seed = ran.seed)
   
-  data <- bins %>% 
+  data <- intervals %>% 
     full_join(counts, by = "Interval") %>%
     full_join(design, by = "Interval") %>%
     arrange(Interval) %>%
@@ -218,12 +218,12 @@ sslamr_data <- function(MS,
   
   # Return complete output
   list(candidates = candidate_bins,
-       bins = bins,
-       MS = MS,
+       intervals = intervals,
+       spectrum = spectrum,
        data = data)
 }
 
-prescreen <- function(candidates, MS, prescreen){
+prescreen <- function(candidates, spectrum, prescreen){
   if(verbose)
     message("  Prescreening...")
   

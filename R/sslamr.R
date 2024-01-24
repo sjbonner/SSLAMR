@@ -438,8 +438,8 @@ sslamr <- function(spectrum = NULL,
       stop("The file ",xlsx_out,"does not exist.")
     
     results <- list(candidates = read_xlsx(xlsx_out,sheet = "candidates"),
-                    intervals = read_xlsx(xlsx_out,sheet = "bins"),
-                    spectrum = read_xlsx(xlsx_out,sheet = "MS"),
+                    intervals = read_xlsx(xlsx_out,sheet = "intervals"),
+                    spectrum = read_xlsx(xlsx_out,sheet = "spectrum"),
                     data = read_xlsx(xlsx_out,sheet = "data"),
                     coefficients = read_xlsx(xlsx_out,sheet = "coefficients"),
                     intercept = read_xlsx(xlsx_out,sheet = "intercept"),
