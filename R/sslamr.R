@@ -439,7 +439,7 @@ sslamr <- function(spectrum = NULL,
     
     results <- list(candidates = read_xlsx(xlsx_out,sheet = "candidates"),
                     bins = read_xlsx(xlsx_out,sheet = "bins"),
-                    MS = read_xlsx(xlsx_out,sheet = "MS"),
+                    spectrum = read_xlsx(xlsx_out,sheet = "MS"),
                     data = read_xlsx(xlsx_out,sheet = "data"),
                     coefficients = read_xlsx(xlsx_out,sheet = "coefficients"),
                     intercept = read_xlsx(xlsx_out,sheet = "intercept"),
