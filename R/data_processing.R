@@ -71,14 +71,14 @@ create_bins <- function(isotope_df, epsilon = .05, min_mass_charge = 0, max_mass
     summarize(Isotopes = n(),
               Lower = min(Mass) - epsilon,
               Upper = max(Mass) + epsilon,
-              Centre = (Upper + Lower)/2,
+              Mass = (Upper + Lower)/2,
               .groups = "drop") %>%
     select(-Interval)
   
   bins2 <- tibble(Lower = c(min_mass_charge,pull(bins1,"Upper")),
                   Upper = c(pull(bins1, Lower), max_mass_charge),
                   Isotopes = 0,
-                  Centre = (Upper + Lower)/2)
+                  Mass = (Upper + Lower)/2)
   
   bind_rows(bins1,bins2) %>%
     arrange(Lower) %>%
@@ -214,7 +214,7 @@ sslamr_data <- function(spectrum,
     full_join(counts, by = "Interval") %>%
     full_join(design, by = "Interval") %>%
     arrange(Interval) %>%
-    mutate(across(!c(Interval, Isotopes, Centre, Lower, Upper, Width, Peaks, Count), ~replace_na(.x, 0)))
+    mutate(across(!c(Interval, Isotopes, Mass, Lower, Upper, Width, Peaks, Count), ~replace_na(.x, 0)))
   
   # Return complete output
   list(candidates = candidate_bins,

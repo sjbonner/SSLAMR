@@ -77,14 +77,14 @@ fitted_summ <- function(samp_df, data){
     select(Chain, Iteration, starts_with("mu")) %>%
     pivot_longer(starts_with("mu"),names_to = "Parameter", values_to = "Fitted") %>%
     mutate(Interval = as.integer(str_extract(Parameter,"[0-9]+"))) %>%
-    full_join(select(data,Interval,Centre,Count), by = "Interval") %>%
+    full_join(select(data,Interval,Mass,Count), by = "Interval") %>%
     group_by(Chain, Iteration) %>%
     mutate(Residual = Count - Fitted,
            Pearson = Residual / sqrt(Fitted)) %>%
     ungroup()
   
   mu_summ <- samples_mu %>%
-    group_by(Interval, Centre, Count) %>%
+    group_by(Interval, Mass, Count) %>%
     summarize(MeanFitted = mean(Fitted),
               Q2.5Fitted = quantile(Fitted,.025),
               Q25Fitted = quantile(Fitted,.25),
