@@ -21,7 +21,7 @@ sslamr_inits <- function(chain,
     # Random mixture containing 10% of the predictors
     
     # Select 10 percent of the possible predictors
-    tmp1 <- sort(sample(1:K, floor(.1 * K)))
+    tmp1 <- sort(sample(1:K, min(K, max(10,floor(.1 * K)))))
     
     # Fit a Poisson GLM using standard methods
     tmp <- glm(counts ~ width + design[,tmp1] - 1, 
