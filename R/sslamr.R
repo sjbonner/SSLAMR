@@ -83,7 +83,7 @@ sslamr_sample <- function(data,
   
   # Extract data values
   design <- data$data %>%
-    select(-Interval, -Isotopes, - Mass, -Lower, 
+    select(-Interval, - Mass, -Lower, 
            -Upper, -Width, - Peaks, -Count) %>%
     as.matrix()
   
@@ -145,7 +145,7 @@ sslamr_sample <- function(data,
                    beta_tmp_k = prior_par$beta_tmp$k,
                    beta_tmp_sd = prior_par$beta_tmp$sd,
                    gamma_p = prior_par$gamma$p)
-  
+ 
   # Set initial values
   jags_inits <- lapply(1:n.chains, sslamr_inits, design = design, width = width, counts = counts)
   
@@ -158,7 +158,7 @@ sslamr_sample <- function(data,
     model_file <- system.file("JAGS/spike_and_slab_jags_simple.R",package="SSLAMR")
   else
     stop("Unknown model ",model,".")
-  
+ 
   # Initialize model and run adapting phase
   jags_model <- jags.model(model_file,
                            data = jags_data,
@@ -209,6 +209,8 @@ sslamr_sample <- function(data,
 #' @param skip_isotopes 
 #' @param min_mass_charge 
 #' @param max_mass_charge 
+#' @param binning 
+#' @param model 
 #'
 #' @importFrom writexl write_xlsx
 #' @importFrom tictoc tic toc
@@ -226,6 +228,7 @@ sslamr <- function(spectrum = NULL,
                    max_isotopes = Inf,
                    skip_isotopes = 0,
                    group_candidates = TRUE,
+                   binning = TRUE,
                    epsilon = .05,
                    min_mass_charge = NULL,
                    max_mass_charge = NULL,
@@ -311,6 +314,7 @@ sslamr <- function(spectrum = NULL,
                         min_abundance = min_abundance,
                         max_isotopes = max_isotopes,
                         skip_isotopes = skip_isotopes,
+                        binning = binning,
                         epsilon = epsilon, 
                         min_mass_charge = min_mass_charge,
                         max_mass_charge = max_mass_charge,
