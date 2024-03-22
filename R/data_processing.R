@@ -88,6 +88,9 @@ create_bins_2 <- function(spectrum, epsilon, min_mass_charge, max_mass_charge){
   
   ## Defines bins based on the peaks in the spectrum
   
+  spectrum <- spectrum |> 
+    filter(`Mass/Charge` >= min_mass_charge, `Mass/Charge` <= max_mass_charge)
+  
   mids <- (head(spectrum$`Mass/Charge`,-1) + tail(spectrum$`Mass/Charge`,-1))/2
   
   intervals1 <- spectrum |> 
