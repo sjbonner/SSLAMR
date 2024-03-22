@@ -59,9 +59,7 @@ candidate_info <- function(candidates,
     filter(Mass >= min_mass_charge, Mass <= max_mass_charge)
 }
 
-
 create_bins_1 <- function(isotope_df, epsilon = .05, min_mass_charge = 0, max_mass_charge = 1000){
-  ## Defines bins based on the candidates and their isotopes
   
   bins1 <- tibble(Mass = sort(unique(pull(isotope_df,"Mass")))) %>%
     mutate(Delta = Mass - lag(Mass, default = 0),
@@ -135,11 +133,24 @@ assign_to_bins <- function(peaks, bins, MC = "Mass", lower = "Lower", upper = "U
            Interval = ifelse(Interval %% 2 == 0, Interval/2, NA))
 }
 
-summarize_counts <- function(spectrum, bins, epsilon=0.05, ran.seed=unclass(Sys.time())){
-  
+summarize_counts <- function(spectrum, 
+                             bins, 
+                             epsilon=0.05, 
+                             rounding = c("nearest", "floor", "ceiling", "bernoulli")){
   # Round counts and sum within bins
+  if(rounding == "nearest"){
+    my_round <- round
+  } else if(rounding == "floor"){
+    my_round <- "floor"
+  } else if(rounding == "ceiling"){
+    my_round <- ceiling
+  } else if(rounding == "bernoulli"){
+    my_round <- round_bernoulli
+  } else
+    stop("Round must be one of nearest, floor, ceiling, or bernoulli.\n")
+
   spectrum <- spectrum %>%
-    mutate(Count = round_bernoulli(Count, ran.seed = ran.seed)) %>%
+    mutate(Count = my_round(Count)) %>%
     group_by(Interval) %>%
     summarize(Peaks = n(),
               Count = sum(Count))
@@ -160,6 +171,12 @@ summarize_counts <- function(spectrum, bins, epsilon=0.05, ran.seed=unclass(Sys.
 #' @param verbose If true then print messages tracking steps (boolean, default = TRUE)
 #' @param min_abundance 
 #' @param isoinfo 
+#' @param isotope_data 
+#' @param max_isotopes 
+#' @param skip_isotopes 
+#' @param min_mass_charge 
+#' @param max_mass_charge 
+#' @param round 
 #'
 #' @return List with 5 components: candidates -- an augmented data frame with the candidate information, 
 #' intervals -- data frame with interval information, spectrum -- augmented data frame with peak data, design -- design matrix, counts -- vector of summed counts for each bin 
@@ -171,10 +188,11 @@ sslamr_data <- function(spectrum,
                         min_abundance = .001,
                         max_isotopes = Inf,
                         skip_isotopes = 0,
-                        epsilon=0.05,
+                        epsilon=0.05, 
                         binning = TRUE,
                         min_mass_charge = NULL,
                         max_mass_charge = NULL,
+                        rounding = "nearest",
                         ran.seed=unclass(Sys.time()),
                         isoinfo = NULL,
                         verbose = FALSE){
@@ -206,7 +224,6 @@ sslamr_data <- function(spectrum,
   # 2) Define bins
   if(verbose)
     message("  Defining bins...")
-  
   if(binning){
     intervals <- create_bins_1(isotope_data, 
                                epsilon, 
@@ -219,6 +236,7 @@ sslamr_data <- function(spectrum,
                                min_mass_charge = min_mass_charge,
                                max_mass_charge = max_mass_charge)
   }
+  
   
   # 3) Assign isotopes to bins
   candidate_bins <- isotope_data %>%
@@ -244,7 +262,7 @@ sslamr_data <- function(spectrum,
     assign_to_bins(intervals, "Mass/Charge")
   
   # 2) Summarize counts within bins
-  counts <- summarize_counts(spectrum, intervals, ran.seed = ran.seed)
+  counts <- summarize_counts(spectrum, intervals, rounding = rounding)
   
   data <- intervals %>% 
     full_join(counts, by = "Interval") %>%
@@ -283,5 +301,3 @@ prescreen <- function(candidates, spectrum, prescreen){
   if(verbose)
     message("    ",nout," of ", nin, " candidates retained.")
 }
-
-

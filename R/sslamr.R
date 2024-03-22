@@ -21,7 +21,7 @@ sslamr_inits <- function(chain,
     # Random mixture containing 10% of the predictors
     
     # Select 10 percent of the possible predictors
-    tmp1 <- sort(sample(1:K, floor(.1 * K)))
+    tmp1 <- sort(sample(1:K, min(K, max(10,floor(.1 * K)))))
     
     # Fit a Poisson GLM using standard methods
     tmp <- glm(counts ~ width + design[,tmp1] - 1, 
@@ -232,6 +232,7 @@ sslamr <- function(spectrum = NULL,
                    epsilon = .05,
                    min_mass_charge = NULL,
                    max_mass_charge = NULL,
+                   rounding = "nearest",
                    n.chains = 3,
                    n.adapt = 1000,
                    n.burnin = 1000,
@@ -318,6 +319,7 @@ sslamr <- function(spectrum = NULL,
                         epsilon = epsilon, 
                         min_mass_charge = min_mass_charge,
                         max_mass_charge = max_mass_charge,
+                        rounding = rounding,
                         isoinfo = isoinfo,
                         verbose = verbose)
     
