@@ -142,8 +142,8 @@ sslamr_sample <- function(data,
     jags_data <- c(jags_data,
                    beta0_mu = prior_par$beta0$mu,
                    beta0_sd = prior_par$beta0$sd,
-                   beta_tmp_k = prior_par$beta_tmp$k,
-                   beta_tmp_sd = prior_par$beta_tmp$sd,
+                   beta_tmp_k = prior_par$beta_tmp_sd$k,
+                   beta_tmp_sd = prior_par$beta_tmp_sd$tau,
                    gamma_p = prior_par$gamma$p)
   
   # Set initial values
