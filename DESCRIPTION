@@ -1,6 +1,6 @@
 Package: SSLAMR
 Title: Spike and SLab Analysis of Mass-spectra in R
-Version: 24.01.23.1
+Version: 24.04.16.2
 Authors@R: c(
     person("Simon","Bonner",,"simon.bonner@uwo.ca", 
       role = c("aut", "cre"),
