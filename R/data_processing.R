@@ -9,11 +9,11 @@ get_iso_info <- function(name,
   if(is.null(isoinfo)){
     ## Retrieve information from ecipex
     dist <- ecipex(formula, sortby = "mass",
-                   groupby = "mass", gross = TRUE)[[1]][,-3] 
+                   groupby = "nucleons", gross = TRUE)[[1]][,-3] 
   }
   else{
     dist <- ecipex(formula, sortby = "mass",isoinfo = isoinfo,
-                   groupby = "mass", gross = TRUE)[[1]][,-3]
+                   groupby = "nucleons", gross = TRUE)[[1]][,-3]
   }
   ## Format table
   dist %>% 
