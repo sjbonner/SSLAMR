@@ -9,11 +9,11 @@ get_iso_info <- function(name,
   if(is.null(isoinfo)){
     ## Retrieve information from ecipex
     dist <- ecipex(formula, sortby = "mass",
-                   groupby = "mass", gross = TRUE)[[1]][,-3] 
+                   groupby = "nucleons", gross = TRUE)[[1]][,-3] 
   }
   else{
     dist <- ecipex(formula, sortby = "mass",isoinfo = isoinfo,
-                   groupby = "mass", gross = TRUE)[[1]][,-3]
+                   groupby = "nucleons", gross = TRUE)[[1]][,-3]
   }
   ## Format table
   dist %>% 
@@ -58,6 +58,7 @@ candidate_info <- function(candidates,
     mutate(Mass = (Mass - Charge * 0.000548579909)/abs(Charge)) %>%
     filter(Mass >= min_mass_charge, Mass <= max_mass_charge)
 }
+
 
 create_bins_1 <- function(isotope_df, epsilon = .05, min_mass_charge = 0, max_mass_charge = 1000){
   
@@ -113,6 +114,7 @@ create_bins_2 <- function(spectrum, epsilon, min_mass_charge, max_mass_charge){
     mutate(Mass = (Lower + Upper)/2) |> 
     rowid_to_column("Interval")
 }
+
 # this function takes the output from lipids_info and 
 # creates the design matrix
 build_design <- function(candidate_bins, epsilon=0.05){
@@ -227,6 +229,7 @@ sslamr_data <- function(spectrum,
   # 2) Define bins
   if(verbose)
     message("  Defining bins...")
+
   if(binning){
     intervals <- create_bins_1(isotope_data, 
                                epsilon, 
@@ -240,6 +243,7 @@ sslamr_data <- function(spectrum,
                                max_mass_charge = max_mass_charge)
   }
   
+
   
   # 3) Assign isotopes to bins
   candidate_bins <- isotope_data %>%
