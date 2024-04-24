@@ -59,9 +59,8 @@ candidate_info <- function(candidates,
     filter(Mass >= min_mass_charge, Mass <= max_mass_charge)
 }
 
-# lipid bins: defines the boundaries of the bins for creating
-# the design matrix
-create_bins <- function(isotope_df, epsilon = .05, min_mass_charge = 0, max_mass_charge = 1000){
+
+create_bins_1 <- function(isotope_df, epsilon = .05, min_mass_charge = 0, max_mass_charge = 1000){
   
   bins1 <- tibble(Mass = sort(unique(pull(isotope_df,"Mass")))) %>%
     mutate(Delta = Mass - lag(Mass, default = 0),
@@ -84,6 +83,36 @@ create_bins <- function(isotope_df, epsilon = .05, min_mass_charge = 0, max_mass
     arrange(Lower) %>%
     rowid_to_column("Interval") %>%
     mutate(Width = Upper - Lower)
+}
+
+create_bins_2 <- function(spectrum, epsilon, min_mass_charge, max_mass_charge){
+  
+  ## Defines bins based on the peaks in the spectrum
+  
+  spectrum <- spectrum |> 
+    filter(`Mass/Charge` >= min_mass_charge, `Mass/Charge` <= max_mass_charge)
+  
+  mids <- (head(spectrum$`Mass/Charge`,-1) + tail(spectrum$`Mass/Charge`,-1))/2
+  
+  intervals1 <- spectrum |> 
+    mutate(Lower = pmax(`Mass/Charge`-epsilon,c(-Inf,mids)),
+           Upper = pmin(`Mass/Charge`+epsilon,c(mids,Inf)),
+           Width = Upper - Lower) |> 
+    select(Lower, Upper, Width)
+  
+  intervals2 <- tibble(Lower = head(intervals1$Upper,-1),
+                       Upper = tail(intervals1$Lower,-1),
+                       Width = Upper - Lower) |> 
+    filter(Width > 0)
+  
+  intervals <- intervals1 |> 
+    bind_rows(intervals2) |> 
+    bind_rows(tibble(Lower = c(min_mass_charge,max(intervals1$Upper)),
+                     Upper = c(min(intervals1$Lower),max_mass_charge),
+                     Width = Upper - Lower)) |> 
+    arrange(Lower) |> 
+    mutate(Mass = (Lower + Upper)/2) |> 
+    rowid_to_column("Interval")
 }
 
 # this function takes the output from lipids_info and 
@@ -165,6 +194,7 @@ sslamr_data <- function(spectrum,
                         max_isotopes = Inf,
                         skip_isotopes = 0,
                         epsilon=0.05, 
+                        binning = TRUE,
                         min_mass_charge = NULL,
                         max_mass_charge = NULL,
                         rounding = "nearest",
@@ -199,10 +229,21 @@ sslamr_data <- function(spectrum,
   # 2) Define bins
   if(verbose)
     message("  Defining bins...")
-  intervals <- create_bins(isotope_data, 
-                           epsilon, 
-                           min_mass_charge = min_mass_charge,
-                           max_mass_charge = max_mass_charge)
+
+  if(binning){
+    intervals <- create_bins_1(isotope_data, 
+                               epsilon, 
+                               min_mass_charge = min_mass_charge,
+                               max_mass_charge = max_mass_charge)
+  }
+  else{
+    intervals <- create_bins_2(spectrum,
+                               epsilon = epsilon, 
+                               min_mass_charge = min_mass_charge,
+                               max_mass_charge = max_mass_charge)
+  }
+  
+
   
   # 3) Assign isotopes to bins
   candidate_bins <- isotope_data %>%
@@ -234,7 +275,7 @@ sslamr_data <- function(spectrum,
     full_join(counts, by = "Interval") %>%
     full_join(design, by = "Interval") %>%
     arrange(Interval) %>%
-    mutate(across(!c(Interval, Isotopes, Mass, Lower, Upper, Width, Peaks, Count), ~replace_na(.x, 0)))
+    mutate(across(!c(Interval, Mass, Lower, Upper, Width, Peaks, Count), ~replace_na(.x, 0)))
   
   # Return complete output
   list(candidates = candidate_bins,
@@ -267,5 +308,3 @@ prescreen <- function(candidates, spectrum, prescreen){
   if(verbose)
     message("    ",nout," of ", nin, " candidates retained.")
 }
-
-
