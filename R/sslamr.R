@@ -71,15 +71,16 @@ sslamr_sample <- function(data,
   if(!model %in% c("hierarchical","log_hierarchical","simple"))
     stop("The argument `model` must be one of 'log_hierarchical', 'hierarchical' or 'simple'.")
   
-  # Set default prior parameters
-  if(is.null(prior_par$beta0))
-    prior_par$beta0 <- list(mu = 0, sd = 100)
-  if(is.null(prior_par$beta_tmp))
-    prior_par$beta_tmp <- list(mu = 0)
-  if(is.null(prior_par$beta_tmp_sd))
-    prior_par$beta_tmp_sd <- list(k = 4, tau = (qt(.75,4)/100)^2)
-  if(is.null(prior_par$gamma))
-    prior_par$gamma <- list(p = .5)
+  # Set prior parameters
+  
+  if(model == "hierarchical"){
+    prior_par <- prior_hierarchical(prior_par)
+  }
+  else if(model == "simple")
+    prior_par <- prior_simple(prior_par)
+  else{
+    stop("Model ", model, "is not yet operational.\n")
+  }
   
   # Extract data values
   design <- data$data %>%
@@ -130,21 +131,7 @@ sslamr_sample <- function(data,
                     y = counts)
   
   # Add prior parameters to data
-  if(model %in% c("hierarchical","log_hierarchical"))
-    jags_data <- c(jags_data,
-                   beta0_mu = prior_par$beta0$mu,
-                   beta0_sd = prior_par$beta0$sd,
-                   beta_tmp_mu = prior_par$beta_tmp$mu,
-                   beta_tmp_sd_k = prior_par$beta_tmp_sd$k,
-                   beta_tmp_sd_tau = prior_par$beta_tmp_sd$tau,
-                   gamma_p = prior_par$gamma$p)
-  else if(model == "simple")
-    jags_data <- c(jags_data,
-                   beta0_mu = prior_par$beta0$mu,
-                   beta0_sd = prior_par$beta0$sd,
-                   beta_tmp_k = prior_par$beta_tmp_sd$k,
-                   beta_tmp_sd = prior_par$beta_tmp_sd$tau,
-                   gamma_p = prior_par$gamma$p)
+  jags_data <- c(jags_data,prior_par)
  
   # Set initial values
   jags_inits <- lapply(1:n.chains, sslamr_inits, design = design, width = width, counts = counts)
@@ -167,7 +154,13 @@ sslamr_sample <- function(data,
                            n.adapt = n.adapt)
   
   # Define variables to monitor
-  monitor <- c("beta","gamma", "mu", "beta0","beta_tmp_sd")
+  
+  # Common parameters
+  monitor <- c("beta","gamma", "mu", "beta0")
+  
+  # Hierarchical model
+  if(model == "hierarchical") 
+    monitor <- c(monitor, "beta_tmp_sd")
   
   # Burnin phase
   burnin <- coda.samples(jags_model,
@@ -349,10 +342,12 @@ sslamr <- function(spectrum = NULL,
       bg.summ <- beta.gamma_summ(s.df, data$candidates)
       if(verbose) toc()
       
-      if(verbose) message("    Computing standard deviations")
-      if(verbose) tic() 
-      beta_sd.summ <- beta_sd_summ(s.df)
-      if(verbose) toc()
+      if(model == "hierarchical"){
+        if(verbose) message("    Computing standard deviations")
+        if(verbose) tic() 
+        beta_sd.summ <- beta_sd_summ(s.df)
+        if(verbose) toc()
+      }
       
       if(verbose) message("    Summarizing intercept")
       if(verbose) tic() 
@@ -404,10 +399,14 @@ sslamr <- function(spectrum = NULL,
                     burnin = b.df,
                     samples = s.df,
                     coefficients=bg.summ,
-                    beta_sd = beta_sd.summ,
                     intercept = int.summ,
                     fitted = fit.summ,
                     parameters = parameters)
+    
+    if(model == "hierarchical"){
+      results$beta_sd <- beta_sd.summ
+      
+    }
   }
   else {
     results <- list(data = data,
@@ -420,9 +419,11 @@ sslamr <- function(spectrum = NULL,
         xlsx_output <- c(results$data,
                          list(coefficients = bg.summ,
                               intercept = int.summ,
-                              beta_sd = beta_sd.summ,
                               fitted = fit.summ,
                               parameters = parameters))
+        
+        if(model == "hierarchical")
+          xlsx_output$beta_sd <- beta_sd.summ
       }
       else{
         xlsx_output <- c(results$data,
@@ -449,9 +450,11 @@ sslamr <- function(spectrum = NULL,
                     data = read_xlsx(xlsx_out,sheet = "data"),
                     coefficients = read_xlsx(xlsx_out,sheet = "coefficients"),
                     intercept = read_xlsx(xlsx_out,sheet = "intercept"),
-                    beta_sd = read_xlsx(xlsx_out,sheet = "beta_sd"),
                     fitted = read_xlsx(xlsx_out,sheet = "fitted"),
                     parameters = read_xlsx(xlsx_out,sheet = "parameters"))
+    
+    if(model == "hierarchical")
+      results$beta_sd <- read_xlsx(xlsx_out,sheet = "beta_sd")
   }
   
   # Return output
