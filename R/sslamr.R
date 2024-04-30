@@ -84,7 +84,7 @@ sslamr_sample <- function(data,
   
   # Extract data values
   design <- data$data %>%
-    select(-Interval, - Mass, -Lower, 
+    select(-Interval, -Isotopes, - Mass, -Lower, 
            -Upper, -Width, - Peaks, -Count) %>%
     as.matrix()
   

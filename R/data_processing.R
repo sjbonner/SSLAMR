@@ -249,6 +249,15 @@ sslamr_data <- function(spectrum,
   candidate_bins <- isotope_data %>%
     assign_to_bins(intervals,"Mass")
   
+  if(!binning){
+    intervals <- candidate_bins |> 
+      group_by(Interval) |> 
+      summarize(Isotopes = n()) |> 
+      right_join(intervals, by = "Interval") |> 
+      arrange(Interval) |> 
+      replace_na(list(Isotopes = 0))
+  }
+
   # 4) Construct design matrix 
   if(verbose)
     message("  Constructing design matrix...")
