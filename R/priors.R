@@ -57,7 +57,7 @@ prior_simple <- function(pars = NULL){
        beta0_sd = beta0_sd)
 }
 
-prior_hierarchical <- function(pars){
+prior_hierarchical <- function(pars = NULL){
   ## beta_tmp -- half-t
   
   ## Set default quantiles
