@@ -62,49 +62,60 @@ prior_hierarchical <- function(pars = NULL){
   
   ## Set default quantiles
   if(is.null(pars$q_beta))
-    q_beta <- rbind(c(5, 1000),c(50,10000))
+    q_beta <- c(5, 100)
   
   if(is.null(pars$p_beta))  
     p_beta <- c(.5, .99)
   
-  ## Set default max df
+  ## Set default min and max df
+  if(is.null(pars$min_df))
+    min_df <- 1
+  
   if(is.null(pars$max_df))
-    max_df <- 100
+    max_df <- 30
   
-  ## Convert probabilities back to full-t
-  pstar <- 1-(1-p_beta)/2
+  ## Marginal CDF of beta
+  cdf_beta <- function(b, tau, df){
+    
+    integrand <- function(sigma, tau, df){
+      (sigma > 0) * (2*pnorm(b/sigma) - 1) * (2/tau * dt(sigma/tau, df = df))
+    }
+    
+    integrate(integrand, 0, Inf, tau = tau, df = df)
+  }
   
-  ## Compute sigma median over range of df
-  beta_df_1 <- tibble(df = 1:max_df) |> 
-    rowwise() |> 
-    mutate(sigma1 = sum(q_beta[1,]^2)/sum(q_beta[1,] * qt(pstar , df)),
-           d1 = sum((q_beta[1,] - sigma1 * qt(pstar, df))^2))
+  ## Marginal quantile function of beta
+  inv_cdf_beta <- function(p, tau, df){
+    target <- function(b, tau, df, p){
+      cdf_beta(b, tau, df)$value - p
+    }
+    
+    sapply(p, function(p){
+      uniroot(target,c(0,1e6), tau = tau, df = df, p = p)$root
+    })
+  }
   
-  ## Compute sigma maximum over range of df
-  beta_df_2 <- tibble(df = 1:max_df) |> 
-    rowwise() |> 
-    mutate(sigma2 = sum(q_beta[2,]^2)/sum(q_beta[2,] * qt(pstar , df)),
-           d2 = sum((q_beta[2,] - sigma2 * qt(pstar, df))^2)) 
-  
-  ## Identify best combination of sigma and df over both
-  beta_df <- full_join(beta_df_1, beta_df_2, by = "df") |> 
-    mutate(d = (sqrt(d1) + sqrt(d2))^2) |> 
-    ungroup() |> 
-    filter(rank(d) == 1)
-  
+  ## Solve for tau
+  tau_solver <- function(p, q, df){
+    target <- function(tau, p, q, df){
+      sum((inv_cdf_beta(p, tau, df) - q)^2)
+    }
+    
+    tau_init <- mean(q/inv_cdf_beta(p, 1, df))
+    
+    optimise(target, c(0.1, 10000), p = p, q = q, df = df)$minimum
+  }
+
   ## Identify parameters for prior on sigma
-  q_sigma <- c(beta_df$sigma1[1], beta_df$sigma2[1])
-  
   sigma_df <- tibble(df = 1:max_df) |> 
     rowwise() |> 
-    mutate(tau = sum(q_sigma^2)/sum(q_sigma * qt(pstar , df)),
-           d = sum((q_sigma - tau * qt(pstar, df))^2)) |>
+    mutate(tau = tau_solver(p_beta, q_beta, df),
+           d = sum((q_beta - inv_cdf_beta(p_beta, tau, df))^2)) |>
     ungroup() |> 
     filter(rank(d) == 1)
   
   ## Extract parameters
   beta_tmp_mu <- 0
-  beta_tmp_k <- beta_df$df[1]
   beta_tmp_sd_tau <- sigma_df$tau[1]
   beta_tmp_sd_k <- sigma_df$df[1]
 
@@ -122,7 +133,6 @@ prior_hierarchical <- function(pars = NULL){
   
   ## Return list of prior parameters
   list(beta_tmp_mu = beta_tmp_mu,
-       beta_tmp_k = beta_tmp_k,
        beta_tmp_sd_tau = beta_tmp_sd_tau,
        beta_tmp_sd_k = beta_tmp_sd_k,
        gamma_p = gamma_p,
