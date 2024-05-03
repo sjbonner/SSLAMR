@@ -5,14 +5,14 @@ prior_simple <- function(pars = NULL){
   
   ## Set default quantiles
   if(is.null(pars$q_beta))
-    q_beta <- c(5, 1000)
+    q_beta <- c(5, 100)
 
   if(is.null(pars$p_beta))  
     p_beta <- c(.5, .99)
   
   ## Set default max df
   if(is.null(pars$max_df))
-    max_df <- 100
+    max_df <- 30
   
   ## Convert probabilities back to full-t
   pstar <- 1-(1-p_beta)/2
