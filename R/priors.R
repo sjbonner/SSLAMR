@@ -125,11 +125,17 @@ prior_hierarchical <- function(pars = NULL){
   else
     gamma_p <- pars$gamma$p
   
-  ## beta_0 -- half-normal
-  if(is.null(pars$beta0)){
-    beta0_mu <- 0
-    beta0_sd <- 100
-  }
+  ## beta0 -- half-normal
+  ## Identify parameters based on quantile matching
+  
+  ## Set default quantiles
+  q_beta0 = 10
+  p_beta0 = .99
+  
+  ## Convert probabilities back to full-normal
+  pstar <- 1 - (1- p_beta0)/2
+  beta0_mu <- 0
+  beta0_sd <- sum(q_beta0^2)/sum(q_beta0 * qnorm(pstar))
   
   ## Return list of prior parameters
   list(beta_tmp_mu = beta_tmp_mu,
