@@ -5,7 +5,7 @@ prior_simple <- function(pars = NULL){
   
   ## Set default quantiles
   if(is.null(pars$q_beta))
-    q_beta <- c(5, 100)
+    q_beta <- c(5, 1000)
 
   if(is.null(pars$p_beta))  
     p_beta <- c(.5, .99)
@@ -62,7 +62,7 @@ prior_hierarchical <- function(pars = NULL){
   
   ## Set default quantiles
   if(is.null(pars$q_beta))
-    q_beta <- c(5, 100)
+    q_beta <- c(5, 1000)
   
   if(is.null(pars$p_beta))  
     p_beta <- c(.5, .99)
