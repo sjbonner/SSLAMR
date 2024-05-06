@@ -4,12 +4,12 @@ prior_simple <- function(pars = NULL){
   ## Identify parameters based on quantile matching
   
   ## Set default quantiles
-  if(is.null(pars$q_beta))
-    q_beta <- c(5, 1000)
-
   if(is.null(pars$p_beta))  
     p_beta <- c(.5, .99)
   
+  if(is.null(pars$q_beta))
+    q_beta <- c(1000 * qt(.75,1)/qt(.995,1), 1000)
+
   ## Set default max df
   if(is.null(pars$max_df))
     max_df <- 30
@@ -61,11 +61,11 @@ prior_hierarchical <- function(pars = NULL){
   ## beta_tmp -- half-t
   
   ## Set default quantiles
-  if(is.null(pars$q_beta))
-    q_beta <- c(5, 1000)
-  
   if(is.null(pars$p_beta))  
     p_beta <- c(.5, .99)
+  
+  if(is.null(pars$q_beta))
+    q_beta <- c(1000 * qt(.75,1)/qt(.995,1), 1000)
   
   ## Set default min and max df
   if(is.null(pars$min_df))
