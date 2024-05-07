@@ -197,6 +197,7 @@ sslamr_data <- function(spectrum,
                         binning = TRUE,
                         min_mass_charge = NULL,
                         max_mass_charge = NULL,
+                        prescreen = prescreen,
                         rounding = "nearest",
                         ran.seed=unclass(Sys.time()),
                         isoinfo = NULL,
@@ -280,40 +281,49 @@ sslamr_data <- function(spectrum,
   # 2) Summarize counts within bins
   counts <- summarize_counts(spectrum, intervals, rounding = rounding)
   
-  data <- intervals %>% 
-    full_join(counts, by = "Interval") %>%
-    full_join(design, by = "Interval") %>%
-    arrange(Interval) %>%
-    mutate(across(!c(Interval, Mass, Lower, Upper, Width, Peaks, Count), ~replace_na(.x, 0)))
-  
-  # Return complete output
+  # Prescreen
+  if(prescreen < Inf){
+    design <- prescreen_data(intervals, counts, design, prescreen = prescreen, verbose = verbose)
+  }
+
   list(candidates = candidate_bins,
        intervals = intervals,
        spectrum = spectrum,
-       data = data)
-}
+       counts = counts,
+       design = design)
+  }
 
-prescreen <- function(candidates, spectrum, prescreen){
+prescreen_data <- function(intervals, counts, design, prescreen = 0, verbose = TRUE){
+
   if(verbose)
     message("  Prescreening...")
   
-  nin <- nrow(candidates)
+  # Initial number of candidates
+  nin <- ncol(design) - 1
   
   # Compute average count in bins with positive abundance for each candidate
   tmp <- design %>% 
-    pivot_longer(-Interval,names_to = "Name",values_to = "Abundance") %>% 
+    pivot_longer(-Interval,names_to = "Name",values_to = "Abundance") |> 
+    filter(Abundance > 0) %>% 
     left_join(counts,by = "Interval") %>% 
     group_by(Name) %>% 
-    mutate(Count_Avg = mean(Count[Abundance > 0])) 
+    summarise(Count = sum(Count)) |> 
+    filter(Count > prescreen)
   
   # Retain candidates with average counts greater than prescreen
-  design <- tmp %>% 
-    filter(Count_Avg >= prescreen) %>%
-    select(Interval, Name, Abundance) %>%
-    pivot_wider(names_from = Name, values_from = Abundance)
+  design1 <- design |>
+    select(Interval, all_of(pull(tmp, "Name")))
+
+  # Add zero rows back to design matrix
+  design1 <- intervals |> 
+    select(Interval) |> 
+    left_join(design1, by = "Interval") |> 
+    mutate(across(everything(), ~replace_na(.x, 0)))
   
-  nout <- ncol(design) - 1
+  nout <- ncol(design1) - 1
   
   if(verbose)
     message("    ",nout," of ", nin, " candidates retained.")
+  
+  return(design1)
 }

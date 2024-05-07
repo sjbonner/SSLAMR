@@ -83,20 +83,20 @@ sslamr_sample <- function(data,
   }
   
   # Extract data values
-  design <- data$data %>%
-    select(-Interval, -Isotopes, - Mass, -Lower, 
-           -Upper, -Width, - Peaks, -Count) %>%
+  design <- data$design |> 
+    select(-Interval) |> 
     as.matrix()
   
   n <- nrow(design) # Number of groups
   K <- ncol(design) # Number of candidate isotopes
   
-  width <- data$data %>% # Extract interval widths
+  # Extract interval widths
+  width <- data$intervals %>% 
     pull("Width")
   
-  counts <- data$data %>% # Extract counts
-    pull("Count") 
-  
+  # Extract counts
+  counts <- data$counts$Count  
+    
   ## Identify non-zero entries of the design matrix
   slot_list <- which(design > 0, arr.ind = TRUE) %>%
     as_tibble() %>%
@@ -204,6 +204,8 @@ sslamr_sample <- function(data,
 #' @param max_mass_charge 
 #' @param binning 
 #' @param model 
+#' @param prescreen 
+#' @param rounding 
 #'
 #' @importFrom writexl write_xlsx
 #' @importFrom tictoc tic toc
@@ -225,6 +227,7 @@ sslamr <- function(spectrum = NULL,
                    epsilon = .05,
                    min_mass_charge = NULL,
                    max_mass_charge = NULL,
+                   prescreen = 0,
                    rounding = "nearest",
                    n.chains = 3,
                    n.adapt = 1000,
@@ -312,6 +315,7 @@ sslamr <- function(spectrum = NULL,
                         epsilon = epsilon, 
                         min_mass_charge = min_mass_charge,
                         max_mass_charge = max_mass_charge,
+                        prescreen = prescreen,
                         rounding = rounding,
                         isoinfo = isoinfo,
                         verbose = verbose)
@@ -339,7 +343,7 @@ sslamr <- function(spectrum = NULL,
       
       if(verbose) message("    Summarizing beta and gamma")
       if(verbose) tic() 
-      bg.summ <- beta.gamma_summ(s.df, data$candidates)
+      bg.summ <- beta.gamma_summ(s.df, data$design)
       if(verbose) toc()
       
       if(model == "hierarchical"){
@@ -356,7 +360,7 @@ sslamr <- function(spectrum = NULL,
       
       if(verbose) message("    Summarizing fitted values")
       if(verbose) tic() 
-      fit.summ <- fitted_summ(s.df, data$data)
+      fit.summ <- fitted_summ(s.df, data$counts)
       if(verbose) toc()
       
       # Convergence diagnostics
