@@ -197,7 +197,8 @@ sslamr_data <- function(spectrum,
                         binning = TRUE,
                         min_mass_charge = NULL,
                         max_mass_charge = NULL,
-                        prescreen = prescreen,
+                        prescreen = 0,
+                        prescreen_weight = FALSE,
                         rounding = "nearest",
                         ran.seed=unclass(Sys.time()),
                         isoinfo = NULL,
@@ -265,7 +266,7 @@ sslamr_data <- function(spectrum,
   design <- build_design(candidate_bins, epsilon=epsilon)
   
   # Process spectrum
-  
+
   # 1) Assign peaks to bins
   if(verbose)
     message("  Assigning peaks to bins...")
@@ -282,10 +283,8 @@ sslamr_data <- function(spectrum,
   counts <- summarize_counts(spectrum, intervals, rounding = rounding)
   
   # Prescreen
-  if(prescreen < Inf){
-    design <- prescreen_data(intervals, counts, design, prescreen = prescreen, verbose = verbose)
-  }
-
+  design <- prescreen_data(intervals, counts, design, prescreen = prescreen, prescreen_weight = prescreen_weight, verbose = verbose)
+  
   list(candidates = candidate_bins,
        intervals = intervals,
        spectrum = spectrum,
@@ -293,7 +292,7 @@ sslamr_data <- function(spectrum,
        design = design)
   }
 
-prescreen_data <- function(intervals, counts, design, prescreen = 0, verbose = TRUE){
+prescreen_data <- function(intervals, counts, design, prescreen = 0, prescreen_weight = FALSE, verbose = TRUE){
 
   if(verbose)
     message("  Prescreening...")
@@ -307,8 +306,8 @@ prescreen_data <- function(intervals, counts, design, prescreen = 0, verbose = T
     filter(Abundance > 0) %>% 
     left_join(counts,by = "Interval") %>% 
     group_by(Name) %>% 
-    summarise(Count = sum(Count)) |> 
-    filter(Count > prescreen)
+    summarise(Count = ifelse(prescreen_weight, sum(Abundance * Count), sum(Count))) |> 
+    filter(Count >= prescreen)
   
   # Retain candidates with average counts greater than prescreen
   design1 <- design |>
