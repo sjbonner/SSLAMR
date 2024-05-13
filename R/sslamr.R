@@ -254,6 +254,14 @@ sslamr <- function(spectrum = NULL,
     if(!is.null(isotope_data) & !is.null(adducts))
       stop("You cannot supply a list of adducts with already formatted isotope data.")
     
+    # Save input arguments for writing to output
+    parameters <- mget(ls(environment(), sorted=F)) |> 
+      c(match.call(expand.dots=F)$...) |>
+      lapply(\(x) ifelse(is.null(x), "", x)) |> 
+      as_tibble() |> 
+      mutate(across(everything(), as.character)) |>
+      pivot_longer(everything(), names_to = "Argument", values_to = "Value")
+    
     # Read input files
     if(verbose) message("Loading input data...")
     
@@ -387,16 +395,6 @@ sslamr <- function(spectrum = NULL,
     }
 
   # package results
-  parameters <- tibble(min_abundance = min_abundance,
-                       epsilon = epsilon,
-                       min_mass_charge = min_mass_charge,
-                       max_mass_charge = max_mass_charge,
-                       n_chains = n.chains,
-                       n_adapt = n.adapt,
-                       n_burnin = n.burnin,
-                       n_sampling  = n.sampling) %>%
-    pivot_longer(everything(), names_to = "Parameter", values_to = "Value")
-
   if(run_model){
     results <- list(data=data,
                     convergence = convergence,
