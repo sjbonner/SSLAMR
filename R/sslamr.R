@@ -177,35 +177,84 @@ sslamr_sample <- function(data,
               samples = samples))
 }
 
-# All in one wrapper
-#' Title
+#' Spike-and-Slab Analysis for Mass Spectrometry in R
 #'
-#' @param spectrum
-#' @param candidates 
-#' @param n.adapt 
-#' @param n.chains 
-#' @param verbose 
-#' @param min_abundance 
-#' @param epsilon 
-#' @param n.burnin 
-#' @param n.sampling 
-#' @param run_model 
-#' @param prior_par 
-#' @param isoinfo 
-#' @param isotope_data 
-#' @param xlsx_out 
-#' @param adducts 
-#' @param replace_isoinfo 
-#' @param group_candidates If TRUE then group candidates with the same chemical formula.
-#' @param max_isotopes 
-#' @param reload_results 
-#' @param skip_isotopes 
-#' @param min_mass_charge 
-#' @param max_mass_charge 
-#' @param binning 
-#' @param model 
-#' @param prescreen 
-#' @param rounding 
+#' @description Implements the Bayesian Poisson generalized linear model of
+#'   Bonner and Bonner for deconvolution of isotope patterns in spectra obtained
+#'   from mass spectrometry using the spike-and-slab prior to simultaneously
+#'   identify and quantify compounds of interest within a sample.
+#'
+#' @details
+#'
+#' @param spectrum Observed spectrum. May be a string specifying the path to the
+#'   data file or an existing data frame. See details for further information.
+#'   (character or dataframe)
+#' @param candidates List of candidate compounds. May be a string specifying the
+#'   path to the data file or an existing data frame. See details for further
+#'   information. (character or dataframe)
+#' @param n.adapt Number of iterations in MCMC sampler's adapting phase.
+#'   (numeric)
+#' @param n.chains Number of parallel chains in MCMC sampler. (numeric)
+#' @param verbose If TRUE then print progress messages. (boolean)
+#' @param min_abundance Minimum proportion retained within candidate isotope
+#'   patterns. (numeric)
+#' @param epsilon Tolerance of binning algorithm. (numeric)
+#' @param n.burnin Number of iterations in MCMC sampler's burn-in phase.
+#'   (numeric)
+#' @param n.sampling Number of iterations in the MCMC sampler's sampling phase.
+#'   (numeric)
+#' @param run_model If TRUE then run MCMC sampler. If FALSE then prepare input
+#'   without runing sampler. Boolean.
+#' @param prior_par List of lists specifying the parameters of the prior
+#'   distributions. List.
+#' @param isoinfo Custom isotope information. May be a string specifying the
+#'   path to the data file or an existing data frame. See details for further
+#'   information. (character or dataframe)
+#' @param isotope_data Preprocessed candidate istope information. May be a
+#'   string specifying the path to the data file or an existing data frame. See
+#'   details for further information. (character or dataframe)
+#' @param xlsx_out Path including name of output file. (character)
+#' @param adducts List of adducts. May be a string specifying the path to the
+#'   data file or an existing data frame. See details for further information.
+#'   (character or dataframe)
+#' @param replace_isoinfo If TRUE then information `ecipex()` is not run and
+#'   only the information in `isoinfo` is used to specify the isotope patterns.
+#'   Otherwise, the inforamtion in `isoinfo` is appended to the output from
+#'   applying `ecipex` to the list of candidates. (boolean)
+#' @param group_candidates If TRUE then group candidates with the same chemical
+#'   formula.
+#' @param max_isotopes Maximum number of isotopes retained in the pattern of any
+#'   candidate. (numeric)
+#' @param reload_results If TRUE then MCMC sampler is not run and output is
+#'   retrieved from the file specified by `xlsx_out`. Otherwise any existing
+#'   file at this location will be overwritten. (boolean)
+#' @param skip_isotopes Number of isotopes at the start of the isotope pattern
+#'   that are ignored. Defaults to 0 implying that all isotopes with relative
+#'   abundance greater than `min_abundance` up to `max_isotopes` will be
+#'   retained in the patter of any candidate. (numeric)
+#' @param min_mass_charge Lower bound of the mass charge window for the
+#'   analysis. Any observations in the spectrum or isotopes of candidates with
+#'   mass/charge ratio below this value are ignored. (numeric)
+#' @param max_mass_charge Upper bound of the mass charge window for the
+#'   analysis. Any observations in the spectrum or isotopes of candidates with
+#'   mass/charge ratio above this value are ignored. (numeric)
+#' @param binning Specifies how the peaks in the spectrum and the entries in the
+#'   candidate isotope patterns are associated to construct the design matrix.
+#'   If TRUE then observations in the spectrum and elements of the isotope
+#'   pattern are binned. Otherwise, elements of each isotope pattern are
+#'   associated with the nearest observation in the spectrum up to a distance of
+#'   `epsilon`. (boolean)
+#' @param model Specifies the form of the model for the abundances of candidates
+#'   present in the sample. Options are "simple" or "hierarchical". See details
+#'   for further information. (character)
+#' @param prescreen Minimum count for prescreening candidate. See details for
+#'   further information. (numeric)
+#' @param rounding Method for rounding non-integer counts. Options are
+#'   "nearest", "floor", "ceiling", or "bernoulli". See details for further
+#'   information. (character)
+#' @param prescreen_weight If TRUE then counts are weighted be the relative
+#'   isotope abundance during the prescreening phase. See details for further
+#'   information. (numeric)
 #'
 #' @importFrom writexl write_xlsx
 #' @importFrom tictoc tic toc
