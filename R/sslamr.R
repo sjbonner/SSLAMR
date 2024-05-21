@@ -180,18 +180,86 @@ sslamr_sample <- function(data,
 #' Spike-and-Slab Analysis for Mass Spectrometry in R
 #'
 #' @description Implements the Bayesian Poisson generalized linear model of
-#'   Bonner and Bonner for deconvolution of isotope patterns in spectra obtained
-#'   from mass spectrometry using the spike-and-slab prior to simultaneously
-#'   identify and quantify compounds of interest within a sample.
+#'   Bonner, Bonner, Walker and Cao for deconvolution of isotope patterns in
+#'   spectra obtained from mass spectrometry using the spike-and-slab prior to
+#'   simultaneously identify and quantify compounds of interest within a sample.
 #'
 #' @details
+#' @section Input Data:
+#'
+#'   The inputs `spectrum`, `candidates`, `isoinfo`, and `adducts` may either be
+#'   specified as strings or data frames. If a string is provided, then it is
+#'   interpreted as the path to a file containing the relevant information and
+#'   is loaded with [read_any()]. Otherwise, it is assumed to be data frame that
+#'   already contains the requisite information in the correct format.
+#'
+#'   The following list specifies the format for these arguments (whether
+#'   contained in an external file or passed as an existing data frame):
+#'
+#' * `spectrum` two columns: `Mass/Charge` and `Count`.
+#' * `candidates` three columns: `Name`, `Formula`, and `Charge`.
+#' * `isoinfo ` four columns `element`, `mass`, `abundance`, and `nucleons`.
+#'   Abundances for the same element must sum to 1.
+#' * `adducts` may either be a string or a data frame. If a string then it is
+#'   interpreted as the path to a file containing the observed spectrum and is
+#'   read with [read_any()]. Otherwise, it is assumed to be a data frame. The
+#'   data must contain three columns: `Name`, `Formula`, and `Action`. Action
+#'   may either be `-` indicating that the fragment may be removed from the
+#'   candidates or `+` indicating that the adduct may be added to the
+#'   candidates.
+#'
+#' @section Isotope Data:
+#'
+#'   The `isotope_data` may either be `NULL` (default), a string, or a data
+#'   frame. If `NULL` then the relative abundances for the isotope of the
+#'   candidates are computed with the [ecipex()] function. If a string then it
+#'   is interpreted as the path to a file containing the processed isotope data
+#'   and is read with [read_any()]. Otherwise, it is assumed to be a data frame.
+#'   The data must contain five columns: `ID`, `Charge`, `Isotope`, `Mass`, and
+#'   `Abund`.
+#'
+#' @section Models:
+#'
+#'   The `model` argument determines the structure of the prior (the model) for
+#'   the abundances of candidates present in the sample. If `simple` then
+#'   abundances are assigned independent prior distributions with fixed
+#'   parameters. If `hierarchical` then the abundances are modelled as draws
+#'   from a distribution whose parameters are determined by the data and
+#'   assigned further prior distributions.
+#'
+#' @section Prescreening:
+#'
+#'   Prescreening allows some candidates to be removed from the analysis before
+#'   fitting the model. Let \eqn{y_i} denote the count for the i-th entry in the
+#'   observed spectrum and \eqn{x_{ij}} the relative contribution of the j-th
+#'   candidate to this value. If `prescreen_weight` is `FALSE` then the
+#'   candidate is include in modelling only if the sum of the counts in the
+#'   spectrum associated with the candidate, \deqn{\sum_{i=1}^n y_i 1(x_{ij}
+#'   >0),} is greater than `prescreen`. If `prescreen_weight` is `TRUE` then the
+#'   candidate is include in modelling only if the weighted sum,
+#'   \deqn{\sum_{i=1}^n y_i x_{ij}} is greater than `prescreen`. Setting
+#'   `prescreen=0` will include all canidates in the model.
+#'
+#' @section Rounding:
+#'
+#'   Intensities in the observed spectrum (`Count`) are assumed to be integer
+#'   counts. If non-integer values are detected then these may be rounded in
+#'   different ways. Options are:
+#'   * `nearest` round to the nearest integer in the usual way.
+#'   * `floor` round down to the next highest integer.
+#'   * `ceiling` round up to the next lowest integer.
+#'   * `bernoulli` if \eqn{d} is the decimal part of the count then round up
+#'   with probability \eqn{d} and down with probability \eqn{1-p}.
+#'
+#'   The advantage of `bernoulli` is that the expected value of the sum of the
+#'   rounded values is equal to the sum of the original values.
 #'
 #' @param spectrum Observed spectrum. May be a string specifying the path to the
-#'   data file or an existing data frame. See details for further information.
-#'   (character or dataframe)
-#' @param candidates List of candidate compounds. May be a string specifying the
-#'   path to the data file or an existing data frame. See details for further
+#'   data file or an existing data frame. See Input Details for further
 #'   information. (character or dataframe)
+#' @param candidates List of candidate compounds. May be a string specifying the
+#'   path to the data file or an existing data frame. See Input Details for
+#'   further information. (character or dataframe)
 #' @param n.adapt Number of iterations in MCMC sampler's adapting phase.
 #'   (numeric)
 #' @param n.chains Number of parallel chains in MCMC sampler. (numeric)
@@ -207,20 +275,21 @@ sslamr_sample <- function(data,
 #'   without runing sampler. Boolean.
 #' @param prior_par List of lists specifying the parameters of the prior
 #'   distributions. List.
-#' @param isoinfo Custom isotope information. May be a string specifying the
-#'   path to the data file or an existing data frame. See details for further
-#'   information. (character or dataframe)
-#' @param isotope_data Preprocessed candidate istope information. May be a
+#' @param isoinfo Custom element isotope information that either replaces or
+#'   adds to the definitions in [ecipex()] (see replace_isoinfo). May be a
 #'   string specifying the path to the data file or an existing data frame. See
-#'   details for further information. (character or dataframe)
+#'   Input Details for further information. (character or dataframe)
+#' @param isotope_data Preprocessed candidate isotope information. May be a
+#'   string specifying the path to the data file or an existing data frame. See
+#'   Isotope Data for further information. (character or dataframe)
 #' @param xlsx_out Path including name of output file. (character)
 #' @param adducts List of adducts. May be a string specifying the path to the
-#'   data file or an existing data frame. See details for further information.
-#'   (character or dataframe)
-#' @param replace_isoinfo If TRUE then information `ecipex()` is not run and
-#'   only the information in `isoinfo` is used to specify the isotope patterns.
-#'   Otherwise, the inforamtion in `isoinfo` is appended to the output from
-#'   applying `ecipex` to the list of candidates. (boolean)
+#'   data file or an existing data frame. See Input Details for further
+#'   information. (character or dataframe)
+#' @param replace_isoinfo If TRUE then the information in `isoinfo` replaces the
+#'   data on the ratios of the elemental isotopes used by [ecipex()]. This
+#'   overrides the default isotope ratios. Otherwise, the information in
+#'   `isoinfo` is appended to the data used by [ecipex()]. (boolean)
 #' @param group_candidates If TRUE then group candidates with the same chemical
 #'   formula.
 #' @param max_isotopes Maximum number of isotopes retained in the pattern of any
@@ -245,23 +314,33 @@ sslamr_sample <- function(data,
 #'   associated with the nearest observation in the spectrum up to a distance of
 #'   `epsilon`. (boolean)
 #' @param model Specifies the form of the model for the abundances of candidates
-#'   present in the sample. Options are "simple" or "hierarchical". See details
+#'   present in the sample. Options are "simple" or "hierarchical". See Models
 #'   for further information. (character)
-#' @param prescreen Minimum count for prescreening candidate. See details for
-#'   further information. (numeric)
+#' @param prescreen Minimum count for prescreening candidate. See Prescreening
+#'   for further information. (numeric)
 #' @param rounding Method for rounding non-integer counts. Options are
-#'   "nearest", "floor", "ceiling", or "bernoulli". See details for further
+#'   "nearest", "floor", "ceiling", or "bernoulli". See Rounding for further
 #'   information. (character)
 #' @param prescreen_weight If TRUE then counts are weighted be the relative
-#'   isotope abundance during the prescreening phase. See details for further
-#'   information. (numeric)
+#'   isotope abundance during the prescreening phase. See Prescreening for
+#'   further information. (numeric)
 #'
 #' @importFrom writexl write_xlsx
 #' @importFrom tictoc tic toc
-#' @return
+#' @return A list of objects produced by processing the data and fitting the
+#'   model. Objects marked(ro)  are only included if `run` is `TRUE`. 
+#'   * `data`
+#'   * `convergence` (ro)
+#'   * `burnin` (ro)
+#'   * `samples` (ro)
+#'   * `coefficients` (ro)
+#'   * `intercept` (ro)
+#'   * `fitted` (ro)
+#'   * `parameters` (ro)
 #' @export
 #'
 #' @examples
+#' #TBD
 sslamr <- function(spectrum = NULL,
                    candidates = NULL,
                    isotope_data = NULL,

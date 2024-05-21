@@ -36,29 +36,30 @@ sslamr(
 }
 \arguments{
 \item{spectrum}{Observed spectrum. May be a string specifying the path to the
-data file or an existing data frame. See details for further information.
-(character or dataframe)}
+data file or an existing data frame. See Input Details for further
+information. (character or dataframe)}
 
 \item{candidates}{List of candidate compounds. May be a string specifying the
-path to the data file or an existing data frame. See details for further
-information. (character or dataframe)}
+path to the data file or an existing data frame. See Input Details for
+further information. (character or dataframe)}
 
-\item{isotope_data}{Preprocessed candidate istope information. May be a
+\item{isotope_data}{Preprocessed candidate isotope information. May be a
 string specifying the path to the data file or an existing data frame. See
-details for further information. (character or dataframe)}
+Isotope Data for further information. (character or dataframe)}
 
 \item{adducts}{List of adducts. May be a string specifying the path to the
-data file or an existing data frame. See details for further information.
-(character or dataframe)}
-
-\item{isoinfo}{Custom isotope information. May be a string specifying the
-path to the data file or an existing data frame. See details for further
+data file or an existing data frame. See Input Details for further
 information. (character or dataframe)}
 
-\item{replace_isoinfo}{If TRUE then information \code{ecipex()} is not run and
-only the information in \code{isoinfo} is used to specify the isotope patterns.
-Otherwise, the inforamtion in \code{isoinfo} is appended to the output from
-applying \code{ecipex} to the list of candidates. (boolean)}
+\item{isoinfo}{Custom element isotope information that either replaces or
+adds to the definitions in \code{\link[=ecipex]{ecipex()}} (see replace_isoinfo). May be a
+string specifying the path to the data file or an existing data frame. See
+Input Details for further information. (character or dataframe)}
+
+\item{replace_isoinfo}{If TRUE then the information in \code{isoinfo} replaces the
+data on the ratios of the elemental isotopes used by \code{\link[=ecipex]{ecipex()}}. This
+overrides the default isotope ratios. Otherwise, the information in
+\code{isoinfo} is appended to the data used by \code{\link[=ecipex]{ecipex()}}. (boolean)}
 
 \item{min_abundance}{Minimum proportion retained within candidate isotope
 patterns. (numeric)}
@@ -91,15 +92,15 @@ mass/charge ratio below this value are ignored. (numeric)}
 analysis. Any observations in the spectrum or isotopes of candidates with
 mass/charge ratio above this value are ignored. (numeric)}
 
-\item{prescreen}{Minimum count for prescreening candidate. See details for
-further information. (numeric)}
+\item{prescreen}{Minimum count for prescreening candidate. See Prescreening
+for further information. (numeric)}
 
 \item{prescreen_weight}{If TRUE then counts are weighted be the relative
-isotope abundance during the prescreening phase. See details for further
-information. (numeric)}
+isotope abundance during the prescreening phase. See Prescreening for
+further information. (numeric)}
 
 \item{rounding}{Method for rounding non-integer counts. Options are
-"nearest", "floor", "ceiling", or "bernoulli". See details for further
+"nearest", "floor", "ceiling", or "bernoulli". See Rounding for further
 information. (character)}
 
 \item{n.chains}{Number of parallel chains in MCMC sampler. (numeric)}
@@ -117,7 +118,7 @@ information. (character)}
 distributions. List.}
 
 \item{model}{Specifies the form of the model for the abundances of candidates
-present in the sample. Options are "simple" or "hierarchical". See details
+present in the sample. Options are "simple" or "hierarchical". See Models
 for further information. (character)}
 
 \item{run_model}{If TRUE then run MCMC sampler. If FALSE then prepare input
@@ -131,9 +132,108 @@ file at this location will be overwritten. (boolean)}
 
 \item{verbose}{If TRUE then print progress messages. (boolean)}
 }
+\value{
+A list of objects produced by processing the data and fitting the
+model. Objects marked(ro)  are only included if \code{run} is \code{TRUE}.
+\itemize{
+\item \code{data}
+\item \code{convergence} (ro)
+\item \code{burnin} (ro)
+\item \code{samples} (ro)
+\item \code{coefficients} (ro)
+\item \code{intercept} (ro)
+\item \code{fitted} (ro)
+\item \code{parameters} (ro)
+}
+}
 \description{
 Implements the Bayesian Poisson generalized linear model of
-Bonner and Bonner for deconvolution of isotope patterns in spectra obtained
-from mass spectrometry using the spike-and-slab prior to simultaneously
-identify and quantify compounds of interest within a sample.
+Bonner, Bonner, Walker and Cao for deconvolution of isotope patterns in
+spectra obtained from mass spectrometry using the spike-and-slab prior to
+simultaneously identify and quantify compounds of interest within a sample.
+}
+\section{Input Data}{
+
+
+The inputs \code{spectrum}, \code{candidates}, \code{isoinfo}, and \code{adducts} may either be
+specified as strings or data frames. If a string is provided, then it is
+interpreted as the path to a file containing the relevant information and
+is loaded with \code{\link[=read_any]{read_any()}}. Otherwise, it is assumed to be data frame that
+already contains the requisite information in the correct format.
+
+The following list specifies the format for these arguments (whether
+contained in an external file or passed as an existing data frame):
+\itemize{
+\item \code{spectrum} two columns: \code{Mass/Charge} and \code{Count}.
+\item \code{candidates} three columns: \code{Name}, \code{Formula}, and \code{Charge}.
+\item \code{isoinfo } four columns \code{element}, \code{mass}, \code{abundance}, and \code{nucleons}.
+Abundances for the same element must sum to 1.
+\item \code{adducts} may either be a string or a data frame. If a string then it is
+interpreted as the path to a file containing the observed spectrum and is
+read with \code{\link[=read_any]{read_any()}}. Otherwise, it is assumed to be a data frame. The
+data must contain three columns: \code{Name}, \code{Formula}, and \code{Action}. Action
+may either be \code{-} indicating that the fragment may be removed from the
+candidates or \code{+} indicating that the adduct may be added to the
+candidates.
+}
+}
+
+\section{Isotope Data}{
+
+
+The \code{isotope_data} may either be \code{NULL} (default), a string, or a data
+frame. If \code{NULL} then the relative abundances for the isotope of the
+candidates are computed with the \code{\link[=ecipex]{ecipex()}} function. If a string then it
+is interpreted as the path to a file containing the processed isotope data
+and is read with \code{\link[=read_any]{read_any()}}. Otherwise, it is assumed to be a data frame.
+The data must contain five columns: \code{ID}, \code{Charge}, \code{Isotope}, \code{Mass}, and
+\code{Abund}.
+}
+
+\section{Models}{
+
+
+The \code{model} argument determines the structure of the prior (the model) for
+the abundances of candidates present in the sample. If \code{simple} then
+abundances are assigned independent prior distributions with fixed
+parameters. If \code{hierarchical} then the abundances are modelled as draws
+from a distribution whose parameters are determined by the data and
+assigned further prior distributions.
+}
+
+\section{Prescreening}{
+
+
+Prescreening allows some candidates to be removed from the analysis before
+fitting the model. Let \eqn{y_i} denote the count for the i-th entry in the
+observed spectrum and \eqn{x_{ij}} the relative contribution of the j-th
+candidate to this value. If \code{prescreen_weight} is \code{FALSE} then the
+candidate is include in modelling only if the sum of the counts in the
+spectrum associated with the candidate, \deqn{\sum_{i=1}^n y_i 1(x_{ij}
+  >0),} is greater than \code{prescreen}. If \code{prescreen_weight} is \code{TRUE} then the
+candidate is include in modelling only if the weighted sum,
+\deqn{\sum_{i=1}^n y_i x_{ij}} is greater than \code{prescreen}. Setting
+\code{prescreen=0} will include all canidates in the model.
+}
+
+\section{Rounding}{
+
+
+Intensities in the observed spectrum (\code{Count}) are assumed to be integer
+counts. If non-integer values are detected then these may be rounded in
+different ways. Options are:
+\itemize{
+\item \code{nearest} round to the nearest integer in the usual way.
+\item \code{floor} round down to the next highest integer.
+\item \code{ceiling} round up to the next lowest integer.
+\item \code{bernoulli} if \eqn{d} is the decimal part of the count then round up
+with probability \eqn{d} and down with probability \eqn{1-p}.
+}
+
+The advantage of \code{bernoulli} is that the expected value of the sum of the
+rounded values is equal to the sum of the original values.
+}
+
+\examples{
+#TBD
 }
