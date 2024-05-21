@@ -2,7 +2,7 @@
 % Please edit documentation in R/sslamr.R
 \name{sslamr}
 \alias{sslamr}
-\title{Title}
+\title{Spike-and-Slab Analysis for Mass Spectrometry in R}
 \usage{
 sslamr(
   spectrum = NULL,
@@ -15,9 +15,13 @@ sslamr(
   max_isotopes = Inf,
   skip_isotopes = 0,
   group_candidates = TRUE,
+  binning = TRUE,
   epsilon = 0.05,
   min_mass_charge = NULL,
   max_mass_charge = NULL,
+  prescreen = 0,
+  prescreen_weight = FALSE,
+  rounding = "nearest",
   n.chains = 3,
   n.adapt = 1000,
   n.burnin = 1000,
@@ -31,48 +35,105 @@ sslamr(
 )
 }
 \arguments{
-\item{candidates}{}
+\item{spectrum}{Observed spectrum. May be a string specifying the path to the
+data file or an existing data frame. See details for further information.
+(character or dataframe)}
 
-\item{isotope_data}{}
+\item{candidates}{List of candidate compounds. May be a string specifying the
+path to the data file or an existing data frame. See details for further
+information. (character or dataframe)}
 
-\item{adducts}{}
+\item{isotope_data}{Preprocessed candidate istope information. May be a
+string specifying the path to the data file or an existing data frame. See
+details for further information. (character or dataframe)}
 
-\item{isoinfo}{}
+\item{adducts}{List of adducts. May be a string specifying the path to the
+data file or an existing data frame. See details for further information.
+(character or dataframe)}
 
-\item{replace_isoinfo}{}
+\item{isoinfo}{Custom isotope information. May be a string specifying the
+path to the data file or an existing data frame. See details for further
+information. (character or dataframe)}
 
-\item{min_abundance}{}
+\item{replace_isoinfo}{If TRUE then information \code{ecipex()} is not run and
+only the information in \code{isoinfo} is used to specify the isotope patterns.
+Otherwise, the inforamtion in \code{isoinfo} is appended to the output from
+applying \code{ecipex} to the list of candidates. (boolean)}
 
-\item{max_isotopes}{}
+\item{min_abundance}{Minimum proportion retained within candidate isotope
+patterns. (numeric)}
 
-\item{skip_isotopes}{}
+\item{max_isotopes}{Maximum number of isotopes retained in the pattern of any
+candidate. (numeric)}
 
-\item{group_candidates}{If TRUE then group candidates with the same chemical formula.}
+\item{skip_isotopes}{Number of isotopes at the start of the isotope pattern
+that are ignored. Defaults to 0 implying that all isotopes with relative
+abundance greater than \code{min_abundance} up to \code{max_isotopes} will be
+retained in the patter of any candidate. (numeric)}
 
-\item{epsilon}{}
+\item{group_candidates}{If TRUE then group candidates with the same chemical
+formula.}
 
-\item{min_mass_charge}{}
+\item{binning}{Specifies how the peaks in the spectrum and the entries in the
+candidate isotope patterns are associated to construct the design matrix.
+If TRUE then observations in the spectrum and elements of the isotope
+pattern are binned. Otherwise, elements of each isotope pattern are
+associated with the nearest observation in the spectrum up to a distance of
+\code{epsilon}. (boolean)}
 
-\item{max_mass_charge}{}
+\item{epsilon}{Tolerance of binning algorithm. (numeric)}
 
-\item{n.chains}{}
+\item{min_mass_charge}{Lower bound of the mass charge window for the
+analysis. Any observations in the spectrum or isotopes of candidates with
+mass/charge ratio below this value are ignored. (numeric)}
 
-\item{n.adapt}{}
+\item{max_mass_charge}{Upper bound of the mass charge window for the
+analysis. Any observations in the spectrum or isotopes of candidates with
+mass/charge ratio above this value are ignored. (numeric)}
 
-\item{n.burnin}{}
+\item{prescreen}{Minimum count for prescreening candidate. See details for
+further information. (numeric)}
 
-\item{n.sampling}{}
+\item{prescreen_weight}{If TRUE then counts are weighted be the relative
+isotope abundance during the prescreening phase. See details for further
+information. (numeric)}
 
-\item{prior_par}{}
+\item{rounding}{Method for rounding non-integer counts. Options are
+"nearest", "floor", "ceiling", or "bernoulli". See details for further
+information. (character)}
 
-\item{run_model}{}
+\item{n.chains}{Number of parallel chains in MCMC sampler. (numeric)}
 
-\item{reload_results}{}
+\item{n.adapt}{Number of iterations in MCMC sampler's adapting phase.
+(numeric)}
 
-\item{xlsx_out}{}
+\item{n.burnin}{Number of iterations in MCMC sampler's burn-in phase.
+(numeric)}
 
-\item{verbose}{}
+\item{n.sampling}{Number of iterations in the MCMC sampler's sampling phase.
+(numeric)}
+
+\item{prior_par}{List of lists specifying the parameters of the prior
+distributions. List.}
+
+\item{model}{Specifies the form of the model for the abundances of candidates
+present in the sample. Options are "simple" or "hierarchical". See details
+for further information. (character)}
+
+\item{run_model}{If TRUE then run MCMC sampler. If FALSE then prepare input
+without runing sampler. Boolean.}
+
+\item{reload_results}{If TRUE then MCMC sampler is not run and output is
+retrieved from the file specified by \code{xlsx_out}. Otherwise any existing
+file at this location will be overwritten. (boolean)}
+
+\item{xlsx_out}{Path including name of output file. (character)}
+
+\item{verbose}{If TRUE then print progress messages. (boolean)}
 }
 \description{
-Title
+Implements the Bayesian Poisson generalized linear model of
+Bonner and Bonner for deconvolution of isotope patterns in spectra obtained
+from mass spectrometry using the spike-and-slab prior to simultaneously
+identify and quantify compounds of interest within a sample.
 }

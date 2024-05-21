@@ -5,38 +5,54 @@
 \title{Data processing}
 \usage{
 sslamr_data(
-  MS,
+  spectrum,
   candidates = NULL,
   isotope_data = NULL,
   min_abundance = 0.001,
   max_isotopes = Inf,
   skip_isotopes = 0,
   epsilon = 0.05,
+  binning = TRUE,
   min_mass_charge = NULL,
   max_mass_charge = NULL,
+  prescreen = 0,
+  prescreen_weight = FALSE,
+  rounding = "nearest",
   ran.seed = unclass(Sys.time()),
   isoinfo = NULL,
   verbose = FALSE
 )
 }
 \arguments{
-\item{MS}{Data frame of observed peaks with columns: Mass/Charge (numeric) and Intensity (numeric).}
+\item{spectrum}{Data frame of observed peaks with columns: Mass/Charge (numeric) and Intensity (numeric).}
 
 \item{candidates}{Data from of candidate molecules with columns: Name (character) and Formula (character).}
 
+\item{isotope_data}{}
+
 \item{min_abundance}{}
 
+\item{max_isotopes}{}
+
+\item{skip_isotopes}{}
+
 \item{epsilon}{Resolution (default = .05)}
+
+\item{min_mass_charge}{}
+
+\item{max_mass_charge}{}
 
 \item{ran.seed}{Random seed for rounding counts (integer)}
 
 \item{isoinfo}{}
 
 \item{verbose}{If true then print messages tracking steps (boolean, default = TRUE)}
+
+\item{round}{}
 }
 \value{
 List with 5 components: candidates -- an augmented data frame with the candidate information,
-bins -- data frame with bin information, MS -- augmented data frame with peak data, design -- design matrix, counts -- vector of summed counts for each bin
+intervals -- data frame with interval information, spectrum -- augmented data frame with peak data, design -- design matrix, counts -- vector of summed counts for each bin
 }
 \description{
 Data processing
