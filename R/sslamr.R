@@ -235,10 +235,12 @@ sslamr_sample <- function(data,
 #'   candidate to this value. If `prescreen_weight` is `FALSE` then the
 #'   candidate is include in modelling only if the sum of the counts in the
 #'   spectrum associated with the candidate, \deqn{\sum_{i=1}^n y_i 1(x_{ij}
-#'   >0),} is greater than `prescreen`. If `prescreen_weight` is `TRUE` then the
+#'   >0),} is greater than `prescreen`. If `prescreen_weight` is `TRUE` then 
+#'   counts are weighted by the relative abundance of the isotopes, scaled so 
+#'   that the most common isotope has a weight of 1. The
 #'   candidate is include in modelling only if the weighted sum,
-#'   \deqn{\sum_{i=1}^n y_i x_{ij}} is greater than `prescreen`. Setting
-#'   `prescreen=0` will include all canidates in the model.
+#'   \deqn{\sum_{i=1}^n y_i \frac{x_{ij}{\max_{j}x_{ij}}} is greater than `prescreen`. Setting
+#'   `prescreen=0` will include all candidates in the model.
 #'
 #' @section Rounding:
 #'
@@ -323,12 +325,12 @@ sslamr_sample <- function(data,
 #'   information. (character)
 #' @param prescreen_weight If TRUE then counts are weighted be the relative
 #'   isotope abundance during the prescreening phase. See Prescreening for
-#'   further information. (numeric)
+#'   further information. (boolean)
 #'
 #' @importFrom writexl write_xlsx
 #' @importFrom tictoc tic toc
 #' @return A list of objects produced by processing the data and fitting the
-#'   model. Objects marked(ro)  are only included if `run` is `TRUE`. 
+#'   model. Objects marked (ro) are only included if `run` is `TRUE`.
 #'   * `data`
 #'   * `convergence` (ro)
 #'   * `burnin` (ro)

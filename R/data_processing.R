@@ -306,8 +306,9 @@ prescreen_data <- function(intervals, counts, design, prescreen = 0, prescreen_w
     pivot_longer(-Interval,names_to = "Name",values_to = "Abundance") |> 
     filter(Abundance > 0) %>% 
     left_join(counts,by = "Interval") %>% 
-    group_by(Name) %>% 
-    summarise(Count = ifelse(prescreen_weight, sum(Abundance * Count), sum(Count))) |> 
+    group_by(Name) %>%
+    mutate(Weight = Abundance/max(Abundance)) |> 
+    summarise(Count = ifelse(prescreen_weight, sum(Weight * Count), sum(Count))) |> 
     filter(Count >= prescreen)
   
   # Retain candidates with average counts greater than prescreen
