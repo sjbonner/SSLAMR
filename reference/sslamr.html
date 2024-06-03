@@ -16,7 +16,7 @@ simultaneously identify and quantify compounds of interest within a sample."><!-
     
     <a class="navbar-brand me-2" href="../index.html">SSLAMR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">24.05.21.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,6 +26,9 @@ simultaneously identify and quantify compounds of interest within a sample."><!-
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item">
   <a class="nav-link" href="../reference/index.html">Reference</a>
+</li>
+<li class="nav-item">
+  <a class="nav-link" href="../news/index.html">Changelog</a>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off"></form>
@@ -177,7 +180,7 @@ for further information. (numeric)</p></dd>
 <dt>prescreen_weight</dt>
 <dd><p>If TRUE then counts are weighted be the relative
 isotope abundance during the prescreening phase. See Prescreening for
-further information. (numeric)</p></dd>
+further information. (boolean)</p></dd>
 
 
 <dt>rounding</dt>
@@ -240,7 +243,7 @@ file at this location will be overwritten. (boolean)</p></dd>
     
 
 <p>A list of objects produced by processing the data and fitting the
-model. Objects marked(ro)  are only included if <code>run</code> is <code>TRUE</code>.</p><ul><li><p><code>data</code></p></li>
+model. Objects marked (ro) are only included if <code>run</code> is <code>TRUE</code>.</p><ul><li><p><code>data</code></p></li>
 <li><p><code>convergence</code> (ro)</p></li>
 <li><p><code>burnin</code> (ro)</p></li>
 <li><p><code>samples</code> (ro)</p></li>
@@ -308,10 +311,12 @@ observed spectrum and \(x_{ij}\) the relative contribution of the j-th
 candidate to this value. If <code>prescreen_weight</code> is <code>FALSE</code> then the
 candidate is include in modelling only if the sum of the counts in the
 spectrum associated with the candidate, $$\sum_{i=1}^n y_i 1(x_{ij}
-  &gt;0),$$ is greater than <code>prescreen</code>. If <code>prescreen_weight</code> is <code>TRUE</code> then the
+  &gt;0),$$ is greater than <code>prescreen</code>. If <code>prescreen_weight</code> is <code>TRUE</code> then
+counts are weighted by the relative abundance of the isotopes, scaled so
+that the most common isotope has a weight of 1. The
 candidate is include in modelling only if the weighted sum,
-$$\sum_{i=1}^n y_i x_{ij}$$ is greater than <code>prescreen</code>. Setting
-<code>prescreen=0</code> will include all canidates in the model.</p>
+$$\sum_{i=1}^n y_i \frac{x_{ij}}{\max_{j}x_{ij}}$$ is greater than <code>prescreen</code>. Setting
+<code>prescreen=0</code> will include all candidates in the model.</p>
     </div>
     <div class="section level2">
     <h2 id="rounding">Rounding<a class="anchor" aria-label="anchor" href="#rounding"></a></h2>
