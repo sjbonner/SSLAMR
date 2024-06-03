@@ -15,13 +15,14 @@ get_iso_info <- function(name,
     dist <- ecipex(formula, sortby = "mass",isoinfo = isoinfo,
                    groupby = "nucleons", gross = TRUE)[[1]][,-3]
   }
+  
   ## Format table
   dist %>% 
     as_tibble() %>% 
     filter(abundance > min_abundance) %>%
     rowid_to_column(var = "Isotope") %>%
     filter(Isotope > skip_isotopes, Isotope <= max_isotopes + skip_isotopes) %>%
-    add_column(ID=name, Charge = charge, .before=1) %>%
+    add_column(ID=name, Formula = formula, Charge = charge, .before=1) %>%
     rename(Mass = centroidMass,
            Abund = abundance)
 }
