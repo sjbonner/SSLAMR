@@ -184,7 +184,6 @@ sslamr_sample <- function(data,
 #'   spectra obtained from mass spectrometry using the spike-and-slab prior to
 #'   simultaneously identify and quantify compounds of interest within a sample.
 #'
-#' @details
 #' @section Input Data:
 #'
 #'   The inputs `spectrum`, `candidates`, `isoinfo`, and `adducts` may either be
@@ -239,7 +238,7 @@ sslamr_sample <- function(data,
 #'   counts are weighted by the relative abundance of the isotopes, scaled so 
 #'   that the most common isotope has a weight of 1. The
 #'   candidate is include in modelling only if the weighted sum,
-#'   \deqn{\sum_{i=1}^n y_i \frac{x_{ij}{\max_{j}x_{ij}}} is greater than `prescreen`. Setting
+#'   \deqn{\sum_{i=1}^n y_i \frac{x_{ij}}{\max_{j}x_{ij}}} is greater than `prescreen`. Setting
 #'   `prescreen=0` will include all candidates in the model.
 #'
 #' @section Rounding:

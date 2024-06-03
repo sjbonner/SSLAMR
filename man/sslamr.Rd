@@ -97,7 +97,7 @@ for further information. (numeric)}
 
 \item{prescreen_weight}{If TRUE then counts are weighted be the relative
 isotope abundance during the prescreening phase. See Prescreening for
-further information. (numeric)}
+further information. (boolean)}
 
 \item{rounding}{Method for rounding non-integer counts. Options are
 "nearest", "floor", "ceiling", or "bernoulli". See Rounding for further
@@ -134,7 +134,7 @@ file at this location will be overwritten. (boolean)}
 }
 \value{
 A list of objects produced by processing the data and fitting the
-model. Objects marked(ro)  are only included if \code{run} is \code{TRUE}.
+model. Objects marked (ro) are only included if \code{run} is \code{TRUE}.
 \itemize{
 \item \code{data}
 \item \code{convergence} (ro)
@@ -210,10 +210,12 @@ observed spectrum and \eqn{x_{ij}} the relative contribution of the j-th
 candidate to this value. If \code{prescreen_weight} is \code{FALSE} then the
 candidate is include in modelling only if the sum of the counts in the
 spectrum associated with the candidate, \deqn{\sum_{i=1}^n y_i 1(x_{ij}
-  >0),} is greater than \code{prescreen}. If \code{prescreen_weight} is \code{TRUE} then the
+  >0),} is greater than \code{prescreen}. If \code{prescreen_weight} is \code{TRUE} then
+counts are weighted by the relative abundance of the isotopes, scaled so
+that the most common isotope has a weight of 1. The
 candidate is include in modelling only if the weighted sum,
-\deqn{\sum_{i=1}^n y_i x_{ij}} is greater than \code{prescreen}. Setting
-\code{prescreen=0} will include all canidates in the model.
+\deqn{\sum_{i=1}^n y_i \frac{x_{ij}}{\max_{j}x_{ij}}} is greater than \code{prescreen}. Setting
+\code{prescreen=0} will include all candidates in the model.
 }
 
 \section{Rounding}{
