@@ -441,7 +441,7 @@ sslamr <- function(spectrum = NULL,
     
     # define design matrix
     if(verbose) message("Processing data...")
-    
+    tic()
     data <- sslamr_data(spectrum, 
                         candidates = candidates,
                         isotope_data = isotope_data,
@@ -457,10 +457,14 @@ sslamr <- function(spectrum = NULL,
                         rounding = rounding,
                         isoinfo = isoinfo,
                         verbose = verbose)
-    
-    # spike slab sampling
+    toc_out <- toc(quiet = !verbose)
+    timing <- tibble(Stage = "Processing data",
+                     Time = toc_out$toc - toc_out$tic)
+
+    # MCMC sampling
     if(run_model){
       if(verbose) message("Running sampler...")
+      tic()
       ss.model <- sslamr_sample(data,
                                 n.adapt = n.adapt,
                                 n.chains = n.chains,
@@ -468,6 +472,11 @@ sslamr <- function(spectrum = NULL,
                                 n.sampling = n.sampling,
                                 prior_par = prior_par,
                                 model = model)
+      toc_out <- toc(quiet = !verbose)
+      timing <- timing |> 
+        add_row(Stage = "Running sampler",
+                Time = toc_out$toc - toc_out$tic)
+
       
       # Convert burnin to data frame
       b.df <- get_samples_df(ss.model$burnin)
@@ -480,30 +489,42 @@ sslamr <- function(spectrum = NULL,
       
       
       if(verbose) message("    Summarizing beta and gamma")
-      if(verbose) tic() 
+      tic() 
       bg.summ <- beta.gamma_summ(s.df, data$design)
-      if(verbose) toc()
+      toc_out <- toc(quiet = !verbose)
+      timing <- timing |> 
+        add_row(Stage = "Summarizing beta and gamma",
+                Time = toc_out$toc - toc_out$tic)
       
       if(model == "hierarchical"){
         if(verbose) message("    Computing standard deviations")
-        if(verbose) tic() 
+        tic() 
         beta_sd.summ <- beta_sd_summ(s.df)
-        if(verbose) toc()
+        toc_out <- toc(quiet = !verbose)
+        timing <- timing |>
+          add_row(Stage = "Computing standard deviations",
+                  Time = toc_out$toc - toc_out$tic)
       }
       
       if(verbose) message("    Summarizing intercept")
-      if(verbose) tic() 
+      tic() 
       int.summ <- intercept_summ(s.df)
-      if(verbose) toc()
+      toc_out <- toc(quiet = !verbose)
+      timing <- timing |>
+        add_row(Stage = "Summarizing intercept",
+                Time = toc_out$toc - toc_out$tic)
       
       if(verbose) message("    Summarizing fitted values")
-      if(verbose) tic() 
+      tic() 
       fit.summ <- fitted_summ(s.df, data$counts)
-      if(verbose) toc()
+      toc_out <- toc(quiet = !verbose)
+      timing <- timing |>
+        add_row(Stage = "Summarizing fitted values",
+                Time = toc_out$toc - toc_out$tic)
       
       # Convergence diagnostics
       if(verbose) message("Computing convergence diagnostics...")
-      if(verbose) tic() 
+      tic() 
       mu_burnin <- lapply(ss.model$burnin,function(mcmc){
         index <- grep("mu",colnames(ss.model$burnin[[1]]))
         mcmc[,index]
@@ -521,7 +542,10 @@ sslamr <- function(spectrum = NULL,
       eff.size <- coda::effectiveSize(mu_samples)
       
       fit.summ <- as_tibble(cbind(fit.summ, EffectiveSize=eff.size))
-      if(verbose) toc()
+      toc_out <- toc(quiet = !verbose)
+      timing <- timing |>
+        add_row(Stage = "Computing convergence diagnostics",
+                Time = toc_out$toc - toc_out$tic)
     }
 
   # package results
@@ -533,7 +557,8 @@ sslamr <- function(spectrum = NULL,
                     coefficients=bg.summ,
                     intercept = int.summ,
                     fitted = fit.summ,
-                    parameters = parameters)
+                    parameters = parameters,
+                    timing = timing)
     
     if(model == "hierarchical"){
       results$beta_sd <- beta_sd.summ
@@ -552,7 +577,8 @@ sslamr <- function(spectrum = NULL,
                          list(coefficients = bg.summ,
                               intercept = int.summ,
                               fitted = fit.summ,
-                              parameters = parameters))
+                              parameters = parameters,
+                              timing = timing))
         
         if(model == "hierarchical")
           xlsx_output$beta_sd <- beta_sd.summ
