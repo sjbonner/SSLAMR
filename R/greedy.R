@@ -1,15 +1,7 @@
 greedy_fit <- function(results, xlsx_out = NULL, critical = .05){
-  
+
   # Extract mass ordered list of candidates
-  candidates <- results$data$candidates %>%
-    group_by(ID) %>%
-    mutate(min_mass = min(Mass),
-           row_num = row_number()) %>%
-    filter(row_num == 1) %>%
-    ungroup() %>%
-    arrange(min_mass, ID) %>%
-    pull("ID")
-  
+  candidates <- colnames(results$data$design)[-1]
   
   # Extract observed counts
   Count <- results$data$counts$Count
