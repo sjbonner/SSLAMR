@@ -12,7 +12,7 @@ greedy_fit <- function(results, xlsx_out = NULL){
   
   
   # Extract observed counts
-  Count <- results$data$data$Count
+  Count <- results$data$counts$Count
   coeffs <- matrix(nrow = length(candidates), ncol = 4)
   
   # Initialize progress bar
@@ -24,10 +24,10 @@ greedy_fit <- function(results, xlsx_out = NULL){
     setTxtProgressBar(pb, k)
     
     # Identify non-zero rows of design matrix for next candidate
-    ind <- which(results$data$data[,candidates[k]] > 0)
-
+    ind <- which(results$data$design[,candidates[k]] > 0)
+    
     # Extract entries of design matrix    
-    x <- results$data$data[ind,] %>%
+    x <- results$data$design[ind,] %>%
       pull(candidates[k])
     
     X <- cbind(1,x)
