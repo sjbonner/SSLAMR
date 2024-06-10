@@ -1,4 +1,4 @@
-greedy_fit <- function(results, xlsx_out = NULL){
+greedy_fit <- function(results, xlsx_out = NULL, critical = .05){
   
   # Extract mass ordered list of candidates
   candidates <- results$data$candidates %>%
@@ -51,7 +51,7 @@ greedy_fit <- function(results, xlsx_out = NULL){
       # 3) P-value
       coeffs[k, 4] <- pchisq(coeffs[k, 3], 1, lower.tail = FALSE)
       
-      if(coeffs[k,2] > 0 & coeffs[k,4] < .05){
+      if(coeffs[k,2] > 0 & coeffs[k,4] < critical){
         # Remove candidate contribution
         Count[ind] <- (Count[ind] - x * coeffs[k,2]) %>%
           round() %>%
