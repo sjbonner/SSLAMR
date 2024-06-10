@@ -24,9 +24,12 @@ sslamr_inits <- function(chain,
     tmp1 <- sort(sample(1:K, min(K, max(10,floor(.1 * K)))))
     
     # Fit a Poisson GLM using standard methods
-    tmp <- glm(counts ~ width + design[,tmp1] - 1, 
-               family = poisson(link = "identity"),
-               start = rep(mean(counts),length(tmp1) + 1))
+    # Warnings are suppressed since this is likely to produce boundary
+    # estimates for some parameters.
+    withr::with_options(new = list(warn = -1),
+                        {tmp <- glm(counts ~ width + design[,tmp1] - 1, 
+                                    family = poisson(link = "identity"),
+                                    start = rep(mean(counts),length(tmp1) + 1))})
     
     # Set the initial value for the intercept
     beta0 <- tmp$coefficients["width"]

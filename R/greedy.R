@@ -33,12 +33,15 @@ greedy_fit <- function(results, xlsx_out = NULL, critical = .05){
     X <- cbind(1,x)
     
     if(any(Count[ind] > 0)){
-      # Fit Poisson model with non-negative constraint
-      fit <- glmnet(X, 
-                    Count[ind],
-                    family = poisson(link = "identity"), 
-                    lower.limits = 0, 
-                    lambda = 0)
+      # Fit Poisson model with non-negative constraint. 
+      # Warnings are suppressed since this is likely to produce boundary
+      # estimates for some parameters.
+      withr::with_options(new = list(warn = -1),
+                          {fit <- glmnet(X, 
+                                         Count[ind],
+                                         family = poisson(link = "identity"), 
+                                         lower.limits = 0, 
+                                         lambda = 0)})
       
       # Extract output values
       # 1) Coefficients
