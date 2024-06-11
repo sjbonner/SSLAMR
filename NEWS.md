@@ -1,3 +1,7 @@
+# SSLAMR 0.1.2
+
+* Updated `greedy` algorithm for comparison. Primary change is to allow prescreening in previous models that feed into the algorithm.
+
 # SSLAMR 0.1.1
 
 * Added additional timing steps and saved timing information in output.
