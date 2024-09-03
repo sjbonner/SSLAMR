@@ -35,7 +35,7 @@ sslamr_simulate <- function(candidates,
   
   # Group nearby observations
   bins <- spectrum %>%
-    create_bins(epsilon = mc_min_diff) 
+    create_bins_1(epsilon = mc_min_diff) 
   
   spectrum <- spectrum %>%
     assign_to_bins(bins) %>%
