@@ -1,3 +1,7 @@
+# SSLAMR 0.1.3
+
+* Added function to summarize mixtures and abundance of components conditional on mixture. 
+
 # SSLAMR 0.1.2
 
 * Updated `greedy` algorithm for comparison. Primary change is to allow prescreening in previous models that feed into the algorithm.
