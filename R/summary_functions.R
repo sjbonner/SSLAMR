@@ -53,7 +53,6 @@ beta.gamma_summ <- function(samp_df, design){
     mutate(beta = ifelse(gamma, beta, NA),
            Name = candidate_names[Name])
   
-  
   summ_beta_gamma <- samples_beta_gamma %>%
     group_by(Name) %>%
     summarize(P_present = mean(gamma),
@@ -68,6 +67,72 @@ beta.gamma_summ <- function(samp_df, design){
   
   return(summ_beta_gamma)
 } 
+
+mixtures_summ <- function(samp_df, design){
+  
+  ## Retrieve candidate names from design matrix
+  candidate_names <- colnames(design)[-1]
+  
+  ## Extract presence indicators
+  gamma <- samp_df |> 
+    select(starts_with("gamma")) |>
+    rowid_to_column(var = "Iteration") |> 
+    pivot_longer(starts_with("gamma"),names_to = "Parameter",values_to = "Presence")|> 
+    mutate(Name = candidate_names[as.integer(str_extract(Parameter,"[0-9]+"))]) |> 
+    select(-Parameter) 
+  
+  ## Extract abundance values
+  beta <- samp_df |> 
+    select(starts_with("beta[")) |>
+    rowid_to_column(var = "Iteration") |> 
+    pivot_longer(starts_with("beta["),names_to = "Parameter",values_to = "Abundance")|> 
+    mutate(Name = candidate_names[as.integer(str_extract(Parameter,"[0-9]+"))]) |> 
+    select(-Parameter) 
+  
+  ## Label mixtures using dplyr's default sorting
+  mixtures1 <- gamma |> 
+    pivot_wider(names_from = Name, values_from = Presence) |> 
+    group_by(across(-c(Iteration))) |> 
+    mutate(Label = cur_group_id()) |> 
+    ungroup() |> 
+    select(Iteration, Label)
+  
+  gamma <- mixtures1 |> 
+    full_join(gamma, by = "Iteration")
+  
+  ## Compute occurrences and proportions for each unique mixture
+  mixtures1 <- mixtures1 |>  
+    group_by(across(-c(Iteration))) |>
+    summarize(n=n(),.groups = "drop") |> 
+    mutate(p = n/sum(n))
+  
+  ## Relabel in descending order of occurrence
+  mixtures1 <- mixtures1 |>
+    arrange(desc(p)) |> 
+    rowid_to_column(var = "Mixture")
+  
+  ## Combine proportions, presence, and abundance
+  mixtures2 <- mixtures1 |> 
+    full_join(gamma, by = "Label") |> 
+    left_join(beta, by = c("Iteration","Name")) |> 
+    select(-Iteration) |> 
+    select(-Label)
+  
+  ## Compute summaries
+  mixtures2 |> 
+    filter(Presence > 0) |> 
+    group_by(Mixture, p, Name) |> 
+    summarise(Mean = mean(Abundance),
+              Median = median(Abundance),
+              SD = sd(Abundance),
+              Q2.5 = quantile(Abundance, .025),
+              Q25 = quantile(Abundance, .25),
+              Q75	= quantile(Abundance, .75),
+              Q97.5 = quantile(Abundance, .975),
+              .groups = "drop")
+  
+
+}
 
 fitted_summ <- function(samp_df, counts){
   

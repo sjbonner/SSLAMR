@@ -497,6 +497,14 @@ sslamr <- function(spectrum = NULL,
         add_row(Stage = "Summarizing beta and gamma",
                 Time = toc_out$toc - toc_out$tic)
       
+      if(verbose) message("    Summarizing mixtures")
+      tic() 
+      mixtures.summ <- mixtures_summ(s.df, data$design)
+      toc_out <- toc(quiet = !verbose)
+      timing <- timing |> 
+        add_row(Stage = "Summarizing mixtures",
+                Time = toc_out$toc - toc_out$tic)
+      
       if(model == "hierarchical"){
         if(verbose) message("    Computing standard deviations")
         tic() 
@@ -556,6 +564,7 @@ sslamr <- function(spectrum = NULL,
                     burnin = b.df,
                     samples = s.df,
                     coefficients=bg.summ,
+                    mixtures = mixtures.summ,
                     intercept = int.summ,
                     fitted = fit.summ,
                     parameters = parameters,
@@ -576,6 +585,7 @@ sslamr <- function(spectrum = NULL,
       if(run_model){
         xlsx_output <- c(results$data,
                          list(coefficients = bg.summ,
+                              mixtures = mixtures.summ,
                               intercept = int.summ,
                               fitted = fit.summ,
                               parameters = parameters,
