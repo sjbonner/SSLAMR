@@ -32,7 +32,6 @@ sslamr_simulate <- function(candidates,
                      Count = 1,
                      Isotope = 1))
   
-  
   # Group nearby observations
   bins <- spectrum %>%
     create_bins_1(epsilon = mc_min_diff) 

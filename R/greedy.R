@@ -1,18 +1,10 @@
-greedy_fit <- function(results, xlsx_out = NULL){
-  
+greedy_fit <- function(results, xlsx_out = NULL, critical = .05){
+
   # Extract mass ordered list of candidates
-  candidates <- results$data$candidates %>%
-    group_by(ID) %>%
-    mutate(min_mass = min(Mass),
-           row_num = row_number()) %>%
-    filter(row_num == 1) %>%
-    ungroup() %>%
-    arrange(min_mass, ID) %>%
-    pull("ID")
-  
+  candidates <- colnames(results$data$design)[-1]
   
   # Extract observed counts
-  Count <- results$data$data$Count
+  Count <- results$data$counts$Count
   coeffs <- matrix(nrow = length(candidates), ncol = 4)
   
   # Initialize progress bar
@@ -24,21 +16,24 @@ greedy_fit <- function(results, xlsx_out = NULL){
     setTxtProgressBar(pb, k)
     
     # Identify non-zero rows of design matrix for next candidate
-    ind <- which(results$data$data[,candidates[k]] > 0)
-
+    ind <- which(results$data$design[,candidates[k]] > 0)
+    
     # Extract entries of design matrix    
-    x <- results$data$data[ind,] %>%
+    x <- results$data$design[ind,] %>%
       pull(candidates[k])
     
     X <- cbind(1,x)
     
     if(any(Count[ind] > 0)){
-      # Fit Poisson model with non-negative constraint
-      fit <- glmnet(X, 
-                    Count[ind],
-                    family = poisson(link = "identity"), 
-                    lower.limits = 0, 
-                    lambda = 0)
+      # Fit Poisson model with non-negative constraint. 
+      # Warnings are suppressed since this is likely to produce boundary
+      # estimates for some parameters.
+      withr::with_options(new = list(warn = -1),
+                          {fit <- glmnet(X, 
+                                         Count[ind],
+                                         family = poisson(link = "identity"), 
+                                         lower.limits = 0, 
+                                         lambda = 0)})
       
       # Extract output values
       # 1) Coefficients
@@ -51,7 +46,7 @@ greedy_fit <- function(results, xlsx_out = NULL){
       # 3) P-value
       coeffs[k, 4] <- pchisq(coeffs[k, 3], 1, lower.tail = FALSE)
       
-      if(coeffs[k,2] > 0 & coeffs[k,4] < .05){
+      if(coeffs[k,2] > 0 & coeffs[k,4] < critical){
         # Remove candidate contribution
         Count[ind] <- (Count[ind] - x * coeffs[k,2]) %>%
           round() %>%
