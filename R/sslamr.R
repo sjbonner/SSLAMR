@@ -328,6 +328,8 @@ sslamr_sample <- function(data,
 #' @param prescreen_weight If TRUE then counts are weighted be the relative
 #'   isotope abundance during the prescreening phase. See Prescreening for
 #'   further information. (boolean)
+#' @param mixtures If TRUE then summarize information about the sampled 
+#'   mixtures. (boolean)
 #'
 #' @importFrom writexl write_xlsx
 #' @importFrom tictoc tic toc
@@ -369,6 +371,7 @@ sslamr <- function(spectrum = NULL,
                    prior_par = NULL,
                    model = "hierarchical",
                    run_model = TRUE,
+                   mixtures = FALSE,
                    reload_results = FALSE,
                    xlsx_out = NULL,
                    verbose = TRUE){
@@ -529,13 +532,15 @@ sslamr <- function(spectrum = NULL,
         add_row(Stage = "Summarizing beta and gamma",
                 Time = toc_out$toc - toc_out$tic)
       
-      if(verbose) message("    Summarizing mixtures")
-      tic() 
-      mixtures.summ <- mixtures_summ(s.df, data$design)
-      toc_out <- toc(quiet = !verbose)
-      timing <- timing |> 
-        add_row(Stage = "Summarizing mixtures",
-                Time = toc_out$toc - toc_out$tic)
+      if(mixtures){
+        if(verbose) message("    Summarizing mixtures... be patient...")
+        tic() 
+        mixtures.summ <- mixtures_summ(s.df, data$design)
+        toc_out <- toc(quiet = !verbose)
+        timing <- timing |> 
+          add_row(Stage = "Summarizing mixtures",
+                  Time = toc_out$toc - toc_out$tic)
+      }
       
       if(model == "hierarchical"){
         if(verbose) message("    Computing standard deviations")
@@ -596,11 +601,13 @@ sslamr <- function(spectrum = NULL,
                     burnin = b.df,
                     samples = s.df,
                     coefficients=bg.summ,
-                    mixtures = mixtures.summ,
                     intercept = int.summ,
                     fitted = fit.summ,
                     parameters = parameters,
                     timing = timing)
+    
+    if(mixtures)
+      results$mixtures <- mixtures.summ
     
     if(model == "hierarchical"){
       results$beta_sd <- beta_sd.summ
@@ -617,11 +624,13 @@ sslamr <- function(spectrum = NULL,
       if(run_model){
         xlsx_output <- c(results$data,
                          list(coefficients = bg.summ,
-                              mixtures = mixtures.summ,
                               intercept = int.summ,
                               fitted = fit.summ,
                               parameters = parameters,
                               timing = timing))
+        
+        if(mixures)
+          xlsx_output$mixures <- mixtures.summ
         
         if(model == "hierarchical")
           xlsx_output$beta_sd <- beta_sd.summ
@@ -630,7 +639,7 @@ sslamr <- function(spectrum = NULL,
         xlsx_output <- c(results$data,
                          list(parameters = parameters))
       }
-      
+    
       write_xlsx(xlsx_output,xlsx_out)
     }
   }
