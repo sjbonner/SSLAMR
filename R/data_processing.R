@@ -218,7 +218,7 @@ sslamr_data <- function(spectrum,
   # 1) Retrieve candidate isotope patterns
   if(is.null(isotope_data)) {
     if(verbose)
-      message("  Retrieving candidate isotope data...")
+      message("   Retrieving candidate isotope data...")
     
     isotope_data <- candidate_info(candidates, 
                                    min_abundance = min_abundance,
@@ -227,11 +227,14 @@ sslamr_data <- function(spectrum,
                                    min_mass_charge = min_mass_charge,
                                    max_mass_charge = max_mass_charge,
                                    isoinfo = isoinfo)
+    
+    if(verbose)
+      message("\n")
   }
   
   # 2) Define bins
   if(verbose)
-    message("  Defining bins...")
+    message("   Defining bins...")
 
   if(binning){
     intervals <- create_bins_1(isotope_data, 
@@ -263,14 +266,14 @@ sslamr_data <- function(spectrum,
 
   # 4) Construct design matrix 
   if(verbose)
-    message("  Constructing design matrix...")
+    message("   Constructing design matrix...")
   design <- build_design(candidate_bins, epsilon=epsilon)
   
   # Process spectrum
 
   # 1) Assign peaks to bins
   if(verbose)
-    message("  Assigning peaks to bins...")
+    message("   Assigning peaks to bins...")
   
   ccf <- 1 / (spectrum %>% filter(Intensity > 0) %>% pull("Intensity") %>% min())
   
@@ -296,7 +299,7 @@ sslamr_data <- function(spectrum,
 prescreen_data <- function(intervals, counts, design, prescreen = 0, prescreen_weight = FALSE, verbose = TRUE){
 
   if(verbose)
-    message("  Prescreening...")
+    message("   Prescreening...")
   
   # Initial number of candidates
   nin <- ncol(design) - 1
