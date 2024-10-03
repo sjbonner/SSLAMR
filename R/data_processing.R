@@ -290,6 +290,33 @@ sslamr_data <- function(spectrum,
   # Prescreen
   design <- prescreen_data(intervals, counts, design, prescreen = prescreen, prescreen_weight = prescreen_weight, verbose = verbose)
   
+  # Remove candidates whose parent has been removed
+  if(verbose)
+    message("   Removing orphaned candidates...")
+  
+  names <- design %>%
+    select(-Interval) %>%
+    colnames()
+  
+  nin <- length(names)
+  
+  parent_name <- tibble(Name = names) %>%
+    left_join(candidates, by = "Name") %>%
+    pull("Parent")
+  
+  parent <- sapply(parent_name, function(name) any(names == name), simplify = TRUE)
+  
+  valid <- names[parent] 
+  
+  nout <- length(valid)
+  
+  design <- design %>%
+    select(Interval, valid)
+  
+  if(verbose)
+    message("    ",nout," of ", nin, " candidates retained.")
+  
+  # Return output  
   list(candidates = candidate_bins,
        intervals = intervals,
        spectrum = spectrum,
