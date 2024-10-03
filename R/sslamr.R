@@ -74,17 +74,6 @@ sslamr_sample <- function(data,
   if(!model %in% c("hierarchical","log_hierarchical","simple"))
     stop("The argument `model` must be one of 'log_hierarchical', 'hierarchical' or 'simple'.")
   
-  # Set prior parameters
-  
-  if(model == "hierarchical"){
-    prior_par <- prior_hierarchical(prior_par)
-  }
-  else if(model == "simple")
-    prior_par <- prior_simple(prior_par)
-  else{
-    stop("Model ", model, "is not yet operational.\n")
-  }
-  
   # Extract data values
   design <- data$design |> 
     select(-Interval) |> 
@@ -132,6 +121,17 @@ sslamr_sample <- function(data,
                     slots = slot_mat,
                     nslots = nslots,
                     y = counts)
+
+  # Set prior parameters
+  
+  if(model == "hierarchical"){
+    prior_par <- prior_hierarchical(prior_par, design)
+  }
+  else if(model == "simple")
+    prior_par <- prior_simple(prior_par, design)
+  else{
+    stop("Model ", model, "is not yet operational.\n")
+  }
   
   # Add prior parameters to data
   jags_data <- c(jags_data,prior_par)
@@ -442,11 +442,35 @@ sslamr <- function(spectrum = NULL,
     if(!is.null(adducts))
       candidates <- modify_adducts(candidates , adducts)
     
-    # Group candidates with identical chemical formulas
-    if(group_candidates)
-      candidates <- candidates %>%
+    # Group candidates with identical chemical formulas and no specified prior 
+    if(group_candidates){
+      # Split candidates list
+      candidates1 <- candidates %>%
+        filter(!is.na(Prior))
+      
+      # Group candidates
+      candidates2 <- candidates %>%
+        filter(is.na(Prior)) %>%
         group_by(Formula,Charge) %>%
-        summarize(Name = paste(Name,collapse = "/"))
+        summarize(Name = paste(Name,collapse = "/"),
+                  .groups = "drop")
+      
+      # Rejoin list
+      candidates <- candidates1 %>%
+        bind_rows(candidates2) %>%
+        arrange(Name)
+    }
+    
+    # Pull prior information from candidates data
+    if(has_name(candidates,"Prior")){
+      gamma_p <- pull(candidates,"Prior")
+      names(gamma_p) <- pull(candidates,"Name")
+      
+      prior_par$gamma <- list(p = gamma_p)
+      
+      candidates <- candidates %>%
+        select(-Prior)
+    }
     
     # define design matrix
     if(verbose) message("Processing data...")

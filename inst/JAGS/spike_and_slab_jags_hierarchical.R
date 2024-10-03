@@ -16,7 +16,7 @@ model{
   ## Prior distributions
   for (k in 1:K) {
     beta_tmp[k] ~ dnorm(beta_tmp_mu,1/beta_tmp_sd^2)T(0,)
-    gamma[k] ~ dbern(gamma_p)
+    gamma[k] ~ dbern(gamma_p[k])
     beta[k] <- beta_tmp[k] * gamma[k]
   }
   

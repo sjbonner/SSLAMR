@@ -1,4 +1,4 @@
-prior_simple <- function(pars = NULL){
+prior_simple <- function(pars = NULL, design){
 
   ## beta -- half-t
   ## Identify parameters based on quantile matching
@@ -34,7 +34,9 @@ prior_simple <- function(pars = NULL){
   
   ## Set default
   if(is.null(pars$gamma_p))
-    gamma_p <- .5
+    gamma_p <- rep(.5, ncol(design))
+  else
+    gamma_p <- ifelse(is.na(pars$gamma$p), .5, pars$gamma$p)
   
   ## beta0 -- half-normal
   ## Identify parameters based on quantile matching
@@ -57,7 +59,7 @@ prior_simple <- function(pars = NULL){
        beta0_sd = beta0_sd)
 }
 
-prior_hierarchical <- function(pars = NULL){
+prior_hierarchical <- function(pars = NULL, design){
   ## beta_tmp -- half-t
   
   ## Set default quantiles
@@ -121,9 +123,9 @@ prior_hierarchical <- function(pars = NULL){
 
   ## gamma -- bernoulli
   if(is.null(pars$gamma))
-    gamma_p <- .5
+    gamma_p <- rep(.5, ncol(design))
   else
-    gamma_p <- pars$gamma$p
+    gamma_p <- ifelse(is.na(pars$gamma$p), .5, pars$gamma$p)
   
   ## beta0 -- half-normal
   ## Identify parameters based on quantile matching
