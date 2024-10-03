@@ -9,13 +9,13 @@ sslamr_inits <- function(chain,
     ## Everything present in equal amounts
     beta0 <- 0.1
     beta_tmp <- rep(mean(counts),K)
-    gamma <- rep(1, K)
+    gamma_tmp <- rep(1, K)
   }
   else if(chain == 2){
     ## Nothing present
     beta0 <- mean(counts/width)
     beta_tmp <- rep(1,K)
-    gamma <- rep(0,K)
+    gamma_tmp <- rep(0,K)
   }
   else{
     # Random mixture containing 10% of the predictors
@@ -42,15 +42,15 @@ sslamr_inits <- function(chain,
     
     # Set the initial values of gamma and beta for those predictors
     # with positive estimates
-    gamma <- rep(0,K)
-    gamma[tmp1[tmp2]] <- 1
+    gamma_tmp <- rep(0,K)
+    gamma_tmp[tmp1[tmp2]] <- 1
     
     beta_tmp <- rep(1,K)
     beta_tmp[tmp1[tmp2]] <- b[tmp2]
   }
   
   # Return list
-  list(gamma = gamma,
+  list(gamma_tmp = gamma_tmp,
        beta0 = beta0,
        beta_tmp = beta_tmp)
 }
@@ -81,6 +81,15 @@ sslamr_sample <- function(data,
   
   n <- nrow(design) # Number of groups
   K <- ncol(design) # Number of candidate isotopes
+  
+  # Identify parents of remaining candidates
+  names <- colnames(design)
+  
+  parent_name <- tibble(ID = names) %>%
+    left_join(filter(data$candidates, Isotope == 1), by = "ID") %>%
+    pull("Parent")
+  
+  parent <- sapply(parent_name, function(name) which(names == name), simplify = TRUE)
   
   # Extract interval widths
   width <- data$intervals %>% 
@@ -120,7 +129,8 @@ sslamr_sample <- function(data,
                     X = design[index1,],
                     slots = slot_mat,
                     nslots = nslots,
-                    y = counts)
+                    y = counts,
+                    parent = parent)
 
   # Set prior parameters
   
@@ -295,7 +305,7 @@ sslamr_sample <- function(data,
 #'   overrides the default isotope ratios. Otherwise, the information in
 #'   `isoinfo` is appended to the data used by [ecipex()]. (boolean)
 #' @param group_candidates If TRUE then group candidates with the same chemical
-#'   formula.
+#'   formula. (boolean)
 #' @param max_isotopes Maximum number of isotopes retained in the pattern of any
 #'   candidate. (numeric)
 #' @param reload_results If TRUE then MCMC sampler is not run and output is
@@ -356,7 +366,7 @@ sslamr <- function(spectrum = NULL,
                    min_abundance = .001,
                    max_isotopes = Inf,
                    skip_isotopes = 0,
-                   group_candidates = TRUE,
+                   group_candidates = NULL,
                    binning = TRUE,
                    epsilon = .05,
                    min_mass_charge = NULL,
@@ -432,7 +442,7 @@ sslamr <- function(spectrum = NULL,
     
     # 5) Element isotope information
     if(is.character(isoinfo)){
-      if(verbose) message("    Loading element isotope information (",isoinfo,")")
+      if(verbose) message("   Loading element isotope information (",isoinfo,")")
       isoinfo <- read_any(isoinfo)
     }
     
@@ -442,10 +452,42 @@ sslamr <- function(spectrum = NULL,
         bind_rows(ecipex::nistiso)
     
     # Modify candidates via adducts
-    if(!is.null(adducts))
-      candidates <- modify_adducts(candidates , adducts)
+    if(!is.null(adducts)){
+      candidates <- candidates %>%
+        modify_adducts(adducts)
+    }
+    else{
+      candidates <- candidates %>%
+        mutate(Parent = Name)
+    }
     
-    # Group candidates with identical chemical formulas and no specified prior 
+    if(verbose) message("Processing data...")
+    tic()
+    
+    # Group candidates with identical chemical formulas
+    if(!is.null(group_candidates)){
+      # Group candidates has been set by user. Check setting is applicable.
+      if(group_candidates & !is.null(adducts))
+        stop("Error: Candidates cannot be grouped when adducts are included. Please set group_candidates to FALSE.\n")
+      
+      if(group_candidates & any(!is.na(candidates$Prior)))
+        stop("Error: Candidates cannot be grouped when prior information is provided. Please set group_candidates to FALSE.\n")
+    }
+    else{
+      # Group candidates not set by user but not applicable.
+      if(!is.null(adducts)){
+        if(verbose) message("   Adducts provided. Not grouping candidates...")
+        group_candidates <- FALSE
+      }
+      else if(any(!is.na(candidates$Prior))){
+        if(verbose) message("   Adducts provided. Not grouping candidates...")
+        group_candidates <- FALSE
+      }
+      else{
+        group_candidates <- TRUE
+      }
+    }
+    
     if(group_candidates){
       # Split candidates list
       candidates1 <- candidates %>%
@@ -476,8 +518,6 @@ sslamr <- function(spectrum = NULL,
     }
     
     # define design matrix
-    if(verbose) message("Processing data...")
-    tic()
     data <- sslamr_data(spectrum, 
                         candidates = candidates,
                         isotope_data = isotope_data,
@@ -629,8 +669,8 @@ sslamr <- function(spectrum = NULL,
                               parameters = parameters,
                               timing = timing))
         
-        if(mixures)
-          xlsx_output$mixures <- mixtures.summ
+        if(mixtures)
+          xlsx_output$mixtures <- mixtures.summ
         
         if(model == "hierarchical")
           xlsx_output$beta_sd <- beta_sd.summ

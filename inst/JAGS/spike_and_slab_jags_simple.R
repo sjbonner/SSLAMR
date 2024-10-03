@@ -16,7 +16,8 @@ model{
   ## Prior distributions
   for (k in 1:K) {
     beta_tmp[k] ~ dt(0, 1/beta_tmp_sd^2, beta_tmp_k)T(0,)
-    gamma[k] ~ dbern(gamma_p[k])
+    gamma_tmp[k] ~ dbern(gamma_p[k])
+    gamma[k] <- gamma_tmp[parent[k]] * gamma_tmp[k]
     beta[k] <- beta_tmp[k] * gamma[k]
   }
   
