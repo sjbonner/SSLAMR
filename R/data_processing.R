@@ -1,5 +1,6 @@
 get_iso_info <- function(name, 
-                         formula, 
+                         formula,
+                         parent,
                          charge, 
                          min_abundance = -Inf, 
                          max_isotopes = Inf,
@@ -22,7 +23,7 @@ get_iso_info <- function(name,
     filter(abundance > min_abundance) %>%
     rowid_to_column(var = "Isotope") %>%
     filter(Isotope > skip_isotopes, Isotope <= max_isotopes + skip_isotopes) %>%
-    add_column(ID=name, Formula = formula, Charge = charge, .before=1) %>%
+    add_column(ID=name, Formula = formula, Parent = parent, Charge = charge, .before=1) %>%
     rename(Mass = centroidMass,
            Abund = abundance)
 }
@@ -50,7 +51,7 @@ candidate_info <- function(candidates,
                            isoinfo = NULL){
   candidates %>%
     rowwise() %>%
-    do(get_iso_info(.$Name, .$Formula, .$Charge, 
+    do(get_iso_info(.$Name, .$Formula, .$Parent, .$Charge, 
                     min_abundance = min_abundance, 
                     max_isotopes = max_isotopes,
                     skip_isotopes = skip_isotopes,

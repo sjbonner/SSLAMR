@@ -40,10 +40,11 @@ modify_adducts <- function(candidates, adducts){
   
   ## Join tibbles
   output <- full_join(candidates2,adducts2, by = "element", suffix = c(".cand",".adduct")) %>%
-    mutate(Name = paste(Name.cand,Action,Name.adduct),
+    mutate(Parent = Name.cand,
+           Name = paste(Name.cand,Action,Name.adduct),
            count = count.cand + 
              (((Action == "+") - (Action == "-")) * count.adduct)) %>%
-    select(Name, Charge, element,count) %>%
+    select(Parent, Name, Charge, element,count) %>%
     filter(count != 0)
   
   ## Remove any impossibilities
@@ -54,11 +55,12 @@ modify_adducts <- function(candidates, adducts){
   
   ## Reconstitute formulas
   output <- output %>%
-    group_by(Name, Charge) %>%
+    group_by(Parent, Name, Charge) %>%
     summarize(Formula = paste0(c(rbind(element,count)),collapse = ""))
   
   ## Append to list of candidate
   candidates %>%
+    mutate(Parent = Name) |> 
     bind_rows(output)
 }
 
