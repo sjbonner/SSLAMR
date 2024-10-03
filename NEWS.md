@@ -1,3 +1,8 @@
+# SSLAMR 0.1.4
+
+* Added functionality to allow separate priors on gamma (inclusion) parameters.
+* Constrained model so that adducts can only appear if the parent is also included.
+
 # SSLAMR 0.1.3
 
 * Added function to summarize mixtures and abundance of components conditional on mixture. 
