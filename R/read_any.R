@@ -6,12 +6,14 @@
 #' `.xlsx` as Excel spreadsheet. Any further arguments are passed directly to
 #' the corresponding function.
 #'
-#' @param filename String providing the path to the input file.
+#' @param filename String providing the path to the input file. (string)
+#' @param show_col_types If FALSE, do not show the guessed column types. (boolean) 
+#' @param ... 
 #'
 #' @return Data frame created by importing the file.
 #' @export
 #'
-read_any <- function(filename, ...){
+read_any <- function(filename, show_col_types = FALSE, ...){
   ## Check that that the filename exists
   if(!file.exists(filename))
     stop("There is no file called ",filename,".\n")
@@ -30,5 +32,5 @@ read_any <- function(filename, ...){
     stop("Sorry, I don't know how to read files of type ",ext,".\n")
     
   ## Read file
-  myreader(filename,...)
+  myreader(filename,show_col_types = show_col_types,...)
 }
