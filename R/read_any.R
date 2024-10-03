@@ -32,5 +32,8 @@ read_any <- function(filename, show_col_types = FALSE, ...){
     stop("Sorry, I don't know how to read files of type ",ext,".\n")
     
   ## Read file
-  myreader(filename,show_col_types = show_col_types,...)
+  if(ext != ".xlsx")
+    myreader(filename, show_col_types = show_col_types,...)
+  else
+    myreader(filename, ...)
 }
