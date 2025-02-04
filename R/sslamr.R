@@ -1,7 +1,8 @@
 sslamr_inits <- function(chain,
                          design,
                          width,
-                         counts){
+                         counts,
+                         prior_par){
   n <- nrow(design)
   K <- ncol(design)
   
@@ -12,16 +13,19 @@ sslamr_inits <- function(chain,
     gamma_tmp <- rep(1, K)
   }
   else if(chain == 2){
-    ## Nothing present
+    ## As little present as possible
     beta0 <- mean(counts/width)
     beta_tmp <- rep(1,K)
-    gamma_tmp <- rep(0,K)
+    gamma_tmp <- ifelse(prior_par$gamma_p == 1, 1, 0)
   }
   else{
-    # Random mixture containing 10% of the predictors
+    # Random mixture containing 10% of the predictors plus any that have a prior of 1
     
     # Select 10 percent of the possible predictors
-    tmp1 <- sort(sample(1:K, min(K, max(10,floor(.1 * K)))))
+    tmp1 <- sample(1:K, min(K, max(10,floor(.1 * K)))) |> 
+      c(which(prior_par$gamma_p == 1)) |> 
+      unique() |> 
+      sort()
     
     # Fit a Poisson GLM using standard methods
     # Warnings are suppressed since this is likely to produce boundary
@@ -38,7 +42,9 @@ sslamr_inits <- function(chain,
     b <- tmp$coefficients[names(tmp$coefficients) != "width"]
     
     # Identify which coefficients were positive
-    tmp2 <- which(b >= 0)
+    tmp2 <- which(b >= 0) |> 
+      c(which(prior_par$gamma_p == 1)) |> 
+      unique()
     
     # Set the initial values of gamma and beta for those predictors
     # with positive estimates
@@ -46,7 +52,7 @@ sslamr_inits <- function(chain,
     gamma_tmp[tmp1[tmp2]] <- 1
     
     beta_tmp <- rep(1,K)
-    beta_tmp[tmp1[tmp2]] <- b[tmp2]
+    beta_tmp[tmp1[tmp2]] <- pmax(b[tmp2],0)
   }
   
   # Return list
@@ -147,7 +153,12 @@ sslamr_sample <- function(data,
   jags_data <- c(jags_data,prior_par)
  
   # Set initial values
-  jags_inits <- lapply(1:n.chains, sslamr_inits, design = design, width = width, counts = counts)
+  jags_inits <- lapply(1:n.chains, 
+                       sslamr_inits, 
+                       design = design, 
+                       width = width, 
+                       counts = counts,
+                       prior_par = prior_par)
   
   # model
   if(model == "hierarchical")
@@ -536,6 +547,11 @@ sslamr <- function(spectrum = NULL,
     toc_out <- toc(quiet = !verbose)
     timing <- tibble(Stage = "Processing data",
                      Time = toc_out$toc - toc_out$tic)
+    
+    # Modify prior parameters to account for pre-screening
+    if(!is.null(prior_par$gamma$p)){
+      prior_par$gamma$p <- prior_par$gamma$p[colnames(data$design[-1])]
+    }
 
     # MCMC sampling
     if(run_model){
