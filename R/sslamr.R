@@ -92,7 +92,7 @@ sslamr_sample <- function(data,
   names <- colnames(design)
   
   parent_name <- tibble(ID = names) %>%
-    left_join(filter(data$candidates, Isotope == 1), by = "ID") %>%
+    left_join(unique(select(data$candidates, ID, Parent), by = "ID")) %>%
     pull("Parent")
   
   parent <- sapply(parent_name, function(name) which(names == name), simplify = TRUE)
@@ -461,6 +461,13 @@ sslamr <- function(spectrum = NULL,
     if(!replace_isoinfo)
       isoinfo <- isoinfo %>%
         bind_rows(ecipex::nistiso)
+    
+    # Add Prior column to candidate list if not specified
+    if(!("Prior" %in% colnames(candidates))){
+      candidates <- candidates %>%
+        add_column(Prior = NA)
+    }
+    
     
     # Modify candidates via adducts
     if(!is.null(adducts)){
