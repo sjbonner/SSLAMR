@@ -92,7 +92,7 @@ sslamr_sample <- function(data,
   names <- colnames(design)
   
   parent_name <- tibble(ID = names) %>%
-    left_join(unique(select(data$candidates, ID, Parent), by = "ID")) %>%
+    left_join(unique(select(data$candidates, ID, Parent)), by = "ID") %>%
     pull("Parent")
   
   parent <- sapply(parent_name, function(name) which(names == name), simplify = TRUE)
@@ -351,6 +351,7 @@ sslamr_sample <- function(data,
 #'   further information. (boolean)
 #' @param mixtures If TRUE then summarize information about the sampled 
 #'   mixtures. (boolean)
+#' @param prescreen_prior Prescreening threshold for prior inclusion probability. Any candidate with prior inclusion probability greater than or equal to this value will be retained in the analysis regardless of the counts in the associated intervals. (numeric)
 #'
 #' @importFrom writexl write_xlsx
 #' @importFrom tictoc tic toc
@@ -383,6 +384,7 @@ sslamr <- function(spectrum = NULL,
                    min_mass_charge = NULL,
                    max_mass_charge = NULL,
                    prescreen = 0,
+                   prescreen_prior = 1,
                    prescreen_weight = FALSE,
                    rounding = "nearest",
                    n.chains = 3,
@@ -546,7 +548,9 @@ sslamr <- function(spectrum = NULL,
                         epsilon = epsilon, 
                         min_mass_charge = min_mass_charge,
                         max_mass_charge = max_mass_charge,
+                        prior_par = prior_par,
                         prescreen = prescreen,
+                        prescreen_prior = prescreen_prior,
                         prescreen_weight = prescreen_weight,
                         rounding = rounding,
                         isoinfo = isoinfo,

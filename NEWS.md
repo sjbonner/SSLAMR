@@ -1,5 +1,9 @@
 # SSLAMR 0.1.5
 
+* Updated prescreen to account for prior inclusion probabilities. Candidates are now retained if their prior inclusion probability is greater than prescreen_prior regardless of the peaks in the associated intervals. This ensures that candidates with high prior probabilities are retained. The value of prescreen_prior is 1 by default. 
+
+# SSLAMR 0.1.5
+
 * Fixed bug in generating initial values when inclusion parameters have separate priors. Initial scenario now correctly keep any candidates with a prior inclusion of 1.
 
 # SSLAMR 0.1.4

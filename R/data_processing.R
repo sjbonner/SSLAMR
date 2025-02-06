@@ -199,7 +199,9 @@ sslamr_data <- function(spectrum,
                         binning = TRUE,
                         min_mass_charge = NULL,
                         max_mass_charge = NULL,
-                        prescreen = 0,
+                        prior_par = NULL,
+                        prescreen = NULL,
+                        prescreen_prior = NULL,
                         prescreen_weight = FALSE,
                         rounding = "nearest",
                         ran.seed=unclass(Sys.time()),
@@ -288,7 +290,8 @@ sslamr_data <- function(spectrum,
   counts <- summarize_counts(spectrum, intervals, rounding = rounding)
   
   # Prescreen
-  design <- prescreen_data(intervals, counts, design, prescreen = prescreen, prescreen_weight = prescreen_weight, verbose = verbose)
+  design <- prescreen_data(intervals, counts, design, prior_par = prior_par, prescreen = prescreen, prescreen_prior = prescreen_prior,
+                           prescreen_weight = prescreen_weight, verbose = verbose)
   
   # Remove candidates whose parent has been removed
   if(verbose)
@@ -324,7 +327,14 @@ sslamr_data <- function(spectrum,
        design = design)
   }
 
-prescreen_data <- function(intervals, counts, design, prescreen = 0, prescreen_weight = FALSE, verbose = TRUE){
+prescreen_data <- function(intervals, 
+                           counts, 
+                           design, 
+                           prior_par,
+                           prescreen = 0, 
+                           prescreen_prior = 1,
+                           prescreen_weight = FALSE, 
+                           verbose = TRUE){
 
   if(verbose)
     message("   Prescreening...")
@@ -333,18 +343,21 @@ prescreen_data <- function(intervals, counts, design, prescreen = 0, prescreen_w
   nin <- ncol(design) - 1
   
   # Compute average count in bins with positive abundance for each candidate
-  tmp <- design %>% 
+  counts_by_canidadate <- design %>% 
     pivot_longer(-Interval,names_to = "Name",values_to = "Abundance") |> 
     filter(Abundance > 0) %>% 
     left_join(counts,by = "Interval") %>% 
     group_by(Name) %>%
     mutate(Weight = Abundance/max(Abundance)) |> 
-    summarise(Count = ifelse(prescreen_weight, sum(Weight * Count), sum(Count))) |> 
-    filter(Count >= prescreen)
+    summarise(Count = ifelse(prescreen_weight, sum(Weight * Count), sum(Count))) 
   
-  # Retain candidates with average counts greater than prescreen
+  # Retain candidates with average counts greater than prescreen or prior inclusion probability of 1
+  retain <- enframe(prior_par$gamma$p, name = "Name", value = "Prior") |> 
+    left_join(counts_by_canidadate, by = "Name") |> 
+    filter(Count >= prescreen | Prior >= prescreen_prior)
+  
   design1 <- design |>
-    select(Interval, all_of(pull(tmp, "Name")))
+    select(Interval, all_of(pull(retain, "Name")))
 
   # Add zero rows back to design matrix
   design1 <- intervals |> 
