@@ -1,3 +1,7 @@
+# SSLAMR 0.1.5
+
+* Fixed bug in generating initial values when inclusion parameters have separate priors. Initial scenario now correctly keep any candidates with a prior inclusion of 1.
+
 # SSLAMR 0.1.4
 
 * Added functionality to allow separate priors on gamma (inclusion) parameters.
