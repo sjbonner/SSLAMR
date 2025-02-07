@@ -34,9 +34,9 @@ prior_simple <- function(pars = NULL, design){
   
   ## Set default
   if(is.null(pars$gamma_p))
-    gamma_p <- rep(.5, ncol(design))
+    gamma_p <- rep(.10, ncol(design))
   else
-    gamma_p <- ifelse(is.na(pars$gamma$p), .5, pars$gamma$p)
+    gamma_p <- ifelse(is.na(pars$gamma$p), .10, pars$gamma$p)
   
   ## beta0 -- half-normal
   ## Identify parameters based on quantile matching
@@ -123,9 +123,9 @@ prior_hierarchical <- function(pars = NULL, design){
 
   ## gamma -- bernoulli
   if(is.null(pars$gamma))
-    gamma_p <- rep(.5, ncol(design))
+    gamma_p <- rep(.10, ncol(design))
   else
-    gamma_p <- ifelse(is.na(pars$gamma$p), .5, pars$gamma$p)
+    gamma_p <- ifelse(is.na(pars$gamma$p), .10, pars$gamma$p)
   
   ## beta0 -- half-normal
   ## Identify parameters based on quantile matching
