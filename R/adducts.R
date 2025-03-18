@@ -3,7 +3,8 @@ formula_to_tibble <- function(data, name = "Formula"){
   data %>% 
     group_by_all() %>%
     ## Split formula into element/counts pairs
-    summarize(split = unlist(str_extract_all(Formula, "[A-Z][a-z]*[0-9]*+")), .groups = "drop") %>%
+    reframe(split = unlist(str_extract_all(Formula, "[A-Z][a-z]*[0-9]*+"))) %>%
+    ungroup() |> 
     ## Extract element and count from pairs
     mutate(element = str_extract(split,"[A-Z][a-z]?+"),
            count = as.numeric(str_extract(split, "[0-9]*$"))) %>%
