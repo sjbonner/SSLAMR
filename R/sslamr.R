@@ -694,6 +694,7 @@ sslamr <- function(spectrum = NULL,
                               intercept = int.summ,
                               fitted = fit.summ,
                               parameters = parameters,
+                              convergence = as_tibble(convergence$psrf, rownames = "Parameter"),
                               timing = timing))
         
         if(mixtures)
@@ -721,17 +722,25 @@ sslamr <- function(spectrum = NULL,
     if(!file.exists(xlsx_out))
       stop("The file ",xlsx_out,"does not exist.")
     
-    results <- list(candidates = read_xlsx(xlsx_out,sheet = "candidates"),
-                    intervals = read_xlsx(xlsx_out,sheet = "intervals"),
-                    spectrum = read_xlsx(xlsx_out,sheet = "spectrum"),
-                    data = read_xlsx(xlsx_out,sheet = "data"),
+    # Retrieve base output objects
+    results <- list(data = list(candidates = read_xlsx(xlsx_out,sheet = "candidates"),
+                                intervals = read_xlsx(xlsx_out,sheet = "intervals"),
+                                spectrum = read_xlsx(xlsx_out,sheet = "spectrum"),
+                                design = read_xlsx(xlsx_out,sheet = "design"),
+                                counts = read_xlsx(xlsx_out,sheet = "counts")),
                     coefficients = read_xlsx(xlsx_out,sheet = "coefficients"),
                     intercept = read_xlsx(xlsx_out,sheet = "intercept"),
                     fitted = read_xlsx(xlsx_out,sheet = "fitted"),
-                    parameters = read_xlsx(xlsx_out,sheet = "parameters"))
+                    parameters = read_xlsx(xlsx_out,sheet = "parameters"),
+                    convergence = read_xlsx(xlsx_out,sheet = "convergence"),
+                    timing = read_xlsx(xlsx_out,sheet = "timing"))
     
-    if(model == "hierarchical")
+    # Retrieve optional output objects
+    if("beta_sd" %in% excel_sheets(xlsx_out))
       results$beta_sd <- read_xlsx(xlsx_out,sheet = "beta_sd")
+    
+    if("mixtures" %in% excel_sheets(xlsx_out))
+      results$mixtures <- read_xlsx(xlsx_out,sheet = "mixtures")
   }
   
   # Return output
