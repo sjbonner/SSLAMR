@@ -73,6 +73,7 @@ sslamr_sample <- function(data,
                           n.adapt = 1000, 
                           n.burnin = 1000,
                           n.sampling = 10000,
+                          n.thin = 1,
                           prior_par = NULL,
                           model = "hierarchical"){
   
@@ -188,13 +189,15 @@ sslamr_sample <- function(data,
   
   # Burnin phase
   burnin <- coda.samples(jags_model,
-                          variable.names = monitor,
-                          n.iter = n.burnin)
+                         variable.names = monitor,
+                         n.iter = n.burnin,
+                         thin = n.thin)
   
   # Sampling phase
   samples <- coda.samples(jags_model,
                           variable.names = monitor,
-                          n.iter = n.sampling)
+                          n.iter = n.sampling,
+                          thin = n.thin)
     
   return(list(inits = jags_inits,
               burnin = burnin,
@@ -391,6 +394,7 @@ sslamr <- function(spectrum = NULL,
                    n.adapt = 1000,
                    n.burnin = 1000,
                    n.sampling = 10000,
+                   n.thin = 1,
                    prior_par = NULL,
                    model = "hierarchical",
                    run_model = TRUE,
@@ -573,6 +577,7 @@ sslamr <- function(spectrum = NULL,
                                 n.chains = n.chains,
                                 n.burnin = n.burnin,
                                 n.sampling = n.sampling,
+                                n.thin = n.thin,
                                 prior_par = prior_par,
                                 model = model)
       toc_out <- toc(quiet = !verbose)
