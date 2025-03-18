@@ -190,8 +190,7 @@ sslamr_sample <- function(data,
   # Burnin phase
   burnin <- coda.samples(jags_model,
                          variable.names = monitor,
-                         n.iter = n.burnin,
-                         thin = n.thin)
+                         n.iter = n.burnin)
   
   # Sampling phase
   samples <- coda.samples(jags_model,
@@ -643,10 +642,11 @@ sslamr <- function(spectrum = NULL,
       # Convergence diagnostics
       if(verbose) message("Computing convergence diagnostics...")
       tic() 
-      mu_burnin <- lapply(ss.model$burnin,function(mcmc){
-        index <- grep("mu",colnames(ss.model$burnin[[1]]))
-        mcmc[,index]
-      })
+      
+      index <- grep("mu",colnames(ss.model$samples[[1]]))
+      
+      mu_burnin <- ss.model$burnin[,index] |> 
+        window(start = n.adapt + floor(n.burnin/2))
       
       convergence <- coda::gelman.diag(mu_burnin,
                                        multivariate = FALSE)
@@ -669,7 +669,7 @@ sslamr <- function(spectrum = NULL,
   # package results
   if(run_model){
     results <- list(data=data,
-                    convergence = convergence,
+                    convergence = as_tibble(convergence$psrf, rownames = "Parameter"),
                     burnin = b.df,
                     samples = s.df,
                     coefficients=bg.summ,
