@@ -4,10 +4,14 @@
 \alias{read_any}
 \title{Read data from files of (m)any format(s)}
 \usage{
-read_any(filename, ...)
+read_any(filename, show_col_types = FALSE, ...)
 }
 \arguments{
-\item{filename}{String providing the path to the input file.}
+\item{filename}{String providing the path to the input file. (string)}
+
+\item{show_col_types}{If FALSE, do not show the guessed column types. (boolean)}
+
+\item{...}{}
 }
 \value{
 Data frame created by importing the file.

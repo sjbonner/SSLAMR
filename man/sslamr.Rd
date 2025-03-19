@@ -14,21 +14,24 @@ sslamr(
   min_abundance = 0.001,
   max_isotopes = Inf,
   skip_isotopes = 0,
-  group_candidates = TRUE,
+  group_candidates = NULL,
   binning = TRUE,
   epsilon = 0.05,
   min_mass_charge = NULL,
   max_mass_charge = NULL,
   prescreen = 0,
+  prescreen_prior = 1,
   prescreen_weight = FALSE,
   rounding = "nearest",
   n.chains = 3,
   n.adapt = 1000,
   n.burnin = 1000,
   n.sampling = 10000,
+  n.thin = 1,
   prior_par = NULL,
   model = "hierarchical",
   run_model = TRUE,
+  mixtures = FALSE,
   reload_results = FALSE,
   xlsx_out = NULL,
   verbose = TRUE
@@ -73,7 +76,7 @@ abundance greater than \code{min_abundance} up to \code{max_isotopes} will be
 retained in the patter of any candidate. (numeric)}
 
 \item{group_candidates}{If TRUE then group candidates with the same chemical
-formula.}
+formula. (boolean)}
 
 \item{binning}{Specifies how the peaks in the spectrum and the entries in the
 candidate isotope patterns are associated to construct the design matrix.
@@ -94,6 +97,8 @@ mass/charge ratio above this value are ignored. (numeric)}
 
 \item{prescreen}{Minimum count for prescreening candidate. See Prescreening
 for further information. (numeric)}
+
+\item{prescreen_prior}{Prescreening threshold for prior inclusion probability. Any candidate with prior inclusion probability greater than or equal to this value will be retained in the analysis regardless of the counts in the associated intervals. (numeric)}
 
 \item{prescreen_weight}{If TRUE then counts are weighted be the relative
 isotope abundance during the prescreening phase. See Prescreening for
@@ -123,6 +128,9 @@ for further information. (character)}
 
 \item{run_model}{If TRUE then run MCMC sampler. If FALSE then prepare input
 without runing sampler. Boolean.}
+
+\item{mixtures}{If TRUE then summarize information about the sampled
+mixtures. (boolean)}
 
 \item{reload_results}{If TRUE then MCMC sampler is not run and output is
 retrieved from the file specified by \code{xlsx_out}. Otherwise any existing
