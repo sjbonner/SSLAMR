@@ -354,6 +354,7 @@ sslamr_sample <- function(data,
 #' @param mixtures If TRUE then summarize information about the sampled 
 #'   mixtures. (boolean)
 #' @param prescreen_prior Prescreening threshold for prior inclusion probability. Any candidate with prior inclusion probability greater than or equal to this value will be retained in the analysis regardless of the counts in the associated intervals. (numeric)
+#' @param n.thin Thinning parameter for MCMC sampler. (integer)
 #'
 #' @importFrom writexl write_xlsx
 #' @importFrom tictoc tic toc
