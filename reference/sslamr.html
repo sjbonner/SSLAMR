@@ -57,21 +57,24 @@ simultaneously identify and quantify compounds of interest within a sample.</p>
 <span>  min_abundance <span class="op">=</span> <span class="fl">0.001</span>,</span>
 <span>  max_isotopes <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  skip_isotopes <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  group_candidates <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  group_candidates <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  binning <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  epsilon <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  min_mass_charge <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  max_mass_charge <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  prescreen <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  prescreen_prior <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  prescreen_weight <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  rounding <span class="op">=</span> <span class="st">"nearest"</span>,</span>
 <span>  n.chains <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  n.adapt <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  n.burnin <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  n.sampling <span class="op">=</span> <span class="fl">10000</span>,</span>
+<span>  n.thin <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  prior_par <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  model <span class="op">=</span> <span class="st">"hierarchical"</span>,</span>
 <span>  run_model <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  mixtures <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  reload_results <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  xlsx_out <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -139,7 +142,7 @@ retained in the patter of any candidate. (numeric)</p></dd>
 
 <dt id="arg-group-candidates">group_candidates<a class="anchor" aria-label="anchor" href="#arg-group-candidates"></a></dt>
 <dd><p>If TRUE then group candidates with the same chemical
-formula.</p></dd>
+formula. (boolean)</p></dd>
 
 
 <dt id="arg-binning">binning<a class="anchor" aria-label="anchor" href="#arg-binning"></a></dt>
@@ -170,6 +173,10 @@ mass/charge ratio above this value are ignored. (numeric)</p></dd>
 <dt id="arg-prescreen">prescreen<a class="anchor" aria-label="anchor" href="#arg-prescreen"></a></dt>
 <dd><p>Minimum count for prescreening candidate. See Prescreening
 for further information. (numeric)</p></dd>
+
+
+<dt id="arg-prescreen-prior">prescreen_prior<a class="anchor" aria-label="anchor" href="#arg-prescreen-prior"></a></dt>
+<dd><p>Prescreening threshold for prior inclusion probability. Any candidate with prior inclusion probability greater than or equal to this value will be retained in the analysis regardless of the counts in the associated intervals. (numeric)</p></dd>
 
 
 <dt id="arg-prescreen-weight">prescreen_weight<a class="anchor" aria-label="anchor" href="#arg-prescreen-weight"></a></dt>
@@ -217,6 +224,11 @@ for further information. (character)</p></dd>
 <dt id="arg-run-model">run_model<a class="anchor" aria-label="anchor" href="#arg-run-model"></a></dt>
 <dd><p>If TRUE then run MCMC sampler. If FALSE then prepare input
 without runing sampler. Boolean.</p></dd>
+
+
+<dt id="arg-mixtures">mixtures<a class="anchor" aria-label="anchor" href="#arg-mixtures"></a></dt>
+<dd><p>If TRUE then summarize information about the sampled
+mixtures. (boolean)</p></dd>
 
 
 <dt id="arg-reload-results">reload_results<a class="anchor" aria-label="anchor" href="#arg-reload-results"></a></dt>
