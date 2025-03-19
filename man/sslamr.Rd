@@ -119,6 +119,8 @@ information. (character)}
 \item{n.sampling}{Number of iterations in the MCMC sampler's sampling phase.
 (numeric)}
 
+\item{n.thin}{Thinning parameter for MCMC sampler. (integer)}
+
 \item{prior_par}{List of lists specifying the parameters of the prior
 distributions. List.}
 
