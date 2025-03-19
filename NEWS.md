@@ -1,4 +1,12 @@
-# SSLAMR 0.1.5
+# SSLAMR 0.1.7
+
+* Added convergence diagnostics to Excel output.
+* Revised convergence diagnostics to include only the final half of the burn-in. 
+* Added argument to thing Markov chains.
+* Changed default prior probability of inclusion from .5 to .1.
+* Further minor bug fixes.
+
+# SSLAMR 0.1.6
 
 * Updated prescreen to account for prior inclusion probabilities. Candidates are now retained if their prior inclusion probability is greater than prescreen_prior regardless of the peaks in the associated intervals. This ensures that candidates with high prior probabilities are retained. The value of prescreen_prior is 1 by default. 
 
