@@ -21,17 +21,19 @@ sslamr_simulate(
 \item{isoinfo}{Custom element isotope information that either replaces or
 adds to the definitions in \code{\link[=ecipex]{ecipex()}}.}
 
-\item{mc_cal_error}{}
+\item{mc_cal_error}{Mass/charge calibration error. This error is assumed to
+be systematic and is added directly to the mass/charge values for all peaks.}
 
-\item{mc_sd}{}
+\item{mc_sd}{Standard deviation of the mass/charge observation error.}
 
-\item{mc_min_diff}{}
+\item{mc_min_diff}{Minimum discernable mass/charge difference. Peaks separated
+by less than this value are combined.}
 
-\item{intercept}{}
+\item{intercept}{Mean count of the noise per amu.}
 
-\item{mc_min}{}
+\item{mc_min}{Lower bound of the mass/charge window.}
 
-\item{mc_max}{}
+\item{mc_max}{Upper bound of the mass/charge window.}
 }
 \value{
 A tibble with the simulated mass spectrum containing columns for
