@@ -1,3 +1,20 @@
+#' Mass Spectrum Simulation
+#'
+#' @param candidates List of candidate compounds included in the mixture. 
+#' @param isoinfo Custom element isotope information that either replaces or
+#'   adds to the definitions in [ecipex()].
+#' @param mc_cal_error 
+#' @param mc_sd 
+#' @param mc_min_diff 
+#' @param intercept 
+#' @param mc_min 
+#' @param mc_max 
+#'
+#' @returns A tibble with the simulated mass spectrum containing columns for 
+#'    the mass/charge ratio and intensity. 
+#' @export
+#'
+#' @examples
 sslamr_simulate <- function(candidates, 
                             isoinfo = NULL,
                             mc_cal_error,
