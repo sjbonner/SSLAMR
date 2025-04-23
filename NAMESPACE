@@ -3,6 +3,7 @@
 export(read_any)
 export(sslamr)
 export(sslamr_data)
+export(sslamr_simulate)
 import(dplyr)
 import(ecipex)
 import(readr)

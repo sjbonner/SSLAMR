@@ -15,6 +15,7 @@
 #' @export
 #'
 #' @examples
+#' # TBD
 sslamr_simulate <- function(candidates, 
                             isoinfo = NULL,
                             mc_cal_error,
