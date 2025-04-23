@@ -1,3 +1,7 @@
+# SSLAMR 0.1.8
+
+* Added documentation for and exported simulate() function.
+
 # SSLAMR 0.1.7
 
 * Added convergence diagnostics to Excel output.
