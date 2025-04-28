@@ -2,9 +2,13 @@ sslamr_inits <- function(chain,
                          design,
                          width,
                          counts,
-                         prior_par){
+                         prior_par,
+                         seed = NULL){
   n <- nrow(design)
   K <- ncol(design)
+  
+  if(!is.null(seed))
+    set.seed(seed)
   
   if(chain == 1){
     ## Everything present in equal amounts
@@ -75,7 +79,8 @@ sslamr_sample <- function(data,
                           n.sampling = 10000,
                           n.thin = 1,
                           prior_par = NULL,
-                          model = "hierarchical"){
+                          model = "hierarchical",
+                          inits_seed = NULL){
   
   # Argument checks
   if(!model %in% c("hierarchical","log_hierarchical","simple"))
@@ -159,7 +164,8 @@ sslamr_sample <- function(data,
                        design = design, 
                        width = width, 
                        counts = counts,
-                       prior_par = prior_par)
+                       prior_par = prior_par,
+                       seed = inits_seed)
   
   # model
   if(model == "hierarchical")
@@ -397,6 +403,7 @@ sslamr <- function(spectrum = NULL,
                    n.thin = 1,
                    prior_par = NULL,
                    model = "hierarchical",
+                   inits_seed = NULL,
                    run_model = TRUE,
                    mixtures = FALSE,
                    reload_results = FALSE,
@@ -579,7 +586,8 @@ sslamr <- function(spectrum = NULL,
                                 n.sampling = n.sampling,
                                 n.thin = n.thin,
                                 prior_par = prior_par,
-                                model = model)
+                                model = model,
+                                inits_seed = inits_seed)
       toc_out <- toc(quiet = !verbose)
       timing <- timing |> 
         add_row(Stage = "Running sampler",
