@@ -493,9 +493,7 @@ sslamr <- function(spectrum = NULL,
       # Group candidates has been set by user. Check setting is applicable.
       if(group_candidates & !is.null(adducts))
         stop("Error: Candidates cannot be grouped when adducts are included. Please set group_candidates to FALSE.\n")
-      
-      if(group_candidates & any(!is.na(candidates$Prior)))
-        stop("Error: Candidates cannot be grouped when prior information is provided. Please set group_candidates to FALSE.\n")
+
     }
     else{
       # Group candidates not set by user but not applicable.
