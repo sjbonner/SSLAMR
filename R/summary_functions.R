@@ -95,7 +95,7 @@ beta.gamma_summ <- function(samp_df, design, group = FALSE, tol = .01){
       igraph::graph_from_adjacency_matrix() |> 
       igraph::as.undirected() |> 
       igraph::cluster_fast_greedy() |> 
-      membership()
+      igraph::membership()
     
   }
   else{
