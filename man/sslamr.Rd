@@ -32,6 +32,7 @@ sslamr(
   n.thin = 1,
   prior_par = NULL,
   model = "hierarchical",
+  inits_seed = NULL,
   run_model = TRUE,
   mixtures = FALSE,
   reload_results = FALSE,
