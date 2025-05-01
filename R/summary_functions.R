@@ -92,8 +92,8 @@ beta.gamma_summ <- function(samp_df, design, group = FALSE, tol = .01){
       })})
     
     memb <- ifelse(distance < tol, 1, 0) |> 
-      graph_from_adjacency_matrix() |> 
-      as.undirected() |> 
+      igraph::graph_from_adjacency_matrix() |> 
+      igraph::as.undirected() |> 
       igraph::cluster_fast_greedy() |> 
       membership()
     
