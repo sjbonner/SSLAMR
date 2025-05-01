@@ -359,8 +359,18 @@ sslamr_sample <- function(data,
 #'   further information. (boolean)
 #' @param mixtures If TRUE then summarize information about the sampled 
 #'   mixtures. (boolean)
-#' @param prescreen_prior Prescreening threshold for prior inclusion probability. Any candidate with prior inclusion probability greater than or equal to this value will be retained in the analysis regardless of the counts in the associated intervals. (numeric)
+#' @param prescreen_prior Prescreening threshold for prior inclusion probability. 
+#' Any candidate with prior inclusion probability greater than or equal to this 
+#' value will be retained in the analysis regardless of the counts in the associated 
+#' intervals. (numeric)
 #' @param n.thin Thinning parameter for MCMC sampler. (integer)
+#' @param group_summary If TRUE then candidates with similar isotope pattens are 
+#' grouped when computing posterior summary statistics for presence and 
+#' abundance. (boolean)
+#' @param bg_tol Tolerance for grouping candidates with similar isotope patterns. 
+#' If `group_summary` is true then candidates with a maximum difference of their 
+#' isotope patterns less than `bg_tol` are grouped when computing posterior 
+#' summary statistics for the presence and abundance. (numeric)
 #'
 #' @importFrom writexl write_xlsx
 #' @importFrom tictoc tic toc
@@ -388,6 +398,8 @@ sslamr <- function(spectrum = NULL,
                    max_isotopes = Inf,
                    skip_isotopes = 0,
                    group_candidates = NULL,
+                   group_summary= FALSE,
+                   bg_tol = .05,
                    binning = TRUE,
                    epsilon = .05,
                    min_mass_charge = NULL,
@@ -500,9 +512,7 @@ sslamr <- function(spectrum = NULL,
       # Group candidates has been set by user. Check setting is applicable.
       if(group_candidates & !is.null(adducts))
         stop("Error: Candidates cannot be grouped when adducts are included. Please set group_candidates to FALSE.\n")
-      
-      if(group_candidates & any(!is.na(candidates$Prior)))
-        stop("Error: Candidates cannot be grouped when prior information is provided. Please set group_candidates to FALSE.\n")
+
     }
     else{
       # Group candidates not set by user but not applicable.
@@ -606,7 +616,7 @@ sslamr <- function(spectrum = NULL,
       
       if(verbose) message("    Summarizing beta and gamma")
       tic() 
-      bg.summ <- beta.gamma_summ(s.df, data$design)
+      bg.summ <- beta.gamma_summ(s.df, data$design, group = group_summary, tol = bg_tol)
       toc_out <- toc(quiet = !verbose)
       timing <- timing |> 
         add_row(Stage = "Summarizing beta and gamma",
