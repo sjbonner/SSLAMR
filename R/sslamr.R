@@ -382,6 +382,8 @@ sslamr <- function(spectrum = NULL,
                    max_isotopes = Inf,
                    skip_isotopes = 0,
                    group_candidates = NULL,
+                   group_summary= FALSE,
+                   bg_tol = .05,
                    binning = TRUE,
                    epsilon = .05,
                    min_mass_charge = NULL,
@@ -596,7 +598,7 @@ sslamr <- function(spectrum = NULL,
       
       if(verbose) message("    Summarizing beta and gamma")
       tic() 
-      bg.summ <- beta.gamma_summ(s.df, data$design)
+      bg.summ <- beta.gamma_summ(s.df, data$design, group = group_summary, tol = bg_tol)
       toc_out <- toc(quiet = !verbose)
       timing <- timing |> 
         add_row(Stage = "Summarizing beta and gamma",
