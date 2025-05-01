@@ -13,7 +13,7 @@ simultaneously identify and quantify compounds of interest within a sample."></h
 
     <a class="navbar-brand me-2" href="../index.html">SSLAMR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,6 +58,8 @@ simultaneously identify and quantify compounds of interest within a sample.</p>
 <span>  max_isotopes <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  skip_isotopes <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  group_candidates <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  group_summary <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  bg_tol <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  binning <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  epsilon <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  min_mass_charge <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -145,6 +147,19 @@ retained in the patter of any candidate. (numeric)</p></dd>
 formula. (boolean)</p></dd>
 
 
+<dt id="arg-group-summary">group_summary<a class="anchor" aria-label="anchor" href="#arg-group-summary"></a></dt>
+<dd><p>If TRUE then candidates with similar isotope pattens are
+grouped when computing posterior summary statistics for presence and
+abundance. (boolean)</p></dd>
+
+
+<dt id="arg-bg-tol">bg_tol<a class="anchor" aria-label="anchor" href="#arg-bg-tol"></a></dt>
+<dd><p>Tolerance for grouping candidates with similar isotope patterns.
+If <code>group_summary</code> is true then candidates with a maximum difference of their
+isotope patterns less than <code>bg_tol</code> are grouped when computing posterior
+summary statistics for the presence and abundance. (numeric)</p></dd>
+
+
 <dt id="arg-binning">binning<a class="anchor" aria-label="anchor" href="#arg-binning"></a></dt>
 <dd><p>Specifies how the peaks in the spectrum and the entries in the
 candidate isotope patterns are associated to construct the design matrix.
@@ -176,7 +191,10 @@ for further information. (numeric)</p></dd>
 
 
 <dt id="arg-prescreen-prior">prescreen_prior<a class="anchor" aria-label="anchor" href="#arg-prescreen-prior"></a></dt>
-<dd><p>Prescreening threshold for prior inclusion probability. Any candidate with prior inclusion probability greater than or equal to this value will be retained in the analysis regardless of the counts in the associated intervals. (numeric)</p></dd>
+<dd><p>Prescreening threshold for prior inclusion probability.
+Any candidate with prior inclusion probability greater than or equal to this
+value will be retained in the analysis regardless of the counts in the associated
+intervals. (numeric)</p></dd>
 
 
 <dt id="arg-prescreen-weight">prescreen_weight<a class="anchor" aria-label="anchor" href="#arg-prescreen-weight"></a></dt>
@@ -357,7 +375,7 @@ rounded values is equal to the sum of the original values.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
 </div>
 
     </footer></div>

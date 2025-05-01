@@ -1,8 +1,8 @@
 pandoc: 3.1.11
-pkgdown: 2.1.1
+pkgdown: 2.1.2
 pkgdown_sha: ~
 articles: {}
-last_built: 2025-04-23T20:53Z
+last_built: 2025-05-01T01:46Z
 urls:
   reference: https://sjbonner.github.io/SSLAMR/reference
   article: https://sjbonner.github.io/SSLAMR/articles
