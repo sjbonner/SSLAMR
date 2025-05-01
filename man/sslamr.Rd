@@ -15,6 +15,8 @@ sslamr(
   max_isotopes = Inf,
   skip_isotopes = 0,
   group_candidates = NULL,
+  group_summary = FALSE,
+  bg_tol = 0.05,
   binning = TRUE,
   epsilon = 0.05,
   min_mass_charge = NULL,
@@ -78,6 +80,15 @@ retained in the patter of any candidate. (numeric)}
 \item{group_candidates}{If TRUE then group candidates with the same chemical
 formula. (boolean)}
 
+\item{group_summary}{If TRUE then candidates with similar isotope pattens are
+grouped when computing posterior summary statistics for presence and
+abundance. (boolean)}
+
+\item{bg_tol}{Tolerance for grouping candidates with similar isotope patterns.
+If \code{group_summary} is true then candidates with a maximum difference of their
+isotope patterns less than \code{bg_tol} are grouped when computing posterior
+summary statistics for the presence and abundance. (numeric)}
+
 \item{binning}{Specifies how the peaks in the spectrum and the entries in the
 candidate isotope patterns are associated to construct the design matrix.
 If TRUE then observations in the spectrum and elements of the isotope
@@ -98,7 +109,10 @@ mass/charge ratio above this value are ignored. (numeric)}
 \item{prescreen}{Minimum count for prescreening candidate. See Prescreening
 for further information. (numeric)}
 
-\item{prescreen_prior}{Prescreening threshold for prior inclusion probability. Any candidate with prior inclusion probability greater than or equal to this value will be retained in the analysis regardless of the counts in the associated intervals. (numeric)}
+\item{prescreen_prior}{Prescreening threshold for prior inclusion probability.
+Any candidate with prior inclusion probability greater than or equal to this
+value will be retained in the analysis regardless of the counts in the associated
+intervals. (numeric)}
 
 \item{prescreen_weight}{If TRUE then counts are weighted be the relative
 isotope abundance during the prescreening phase. See Prescreening for

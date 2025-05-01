@@ -40,21 +40,82 @@ intercept_summ <- function(samp_df){
   return(summ_beta0)
 }
 
-beta.gamma_summ <- function(samp_df, design){
+beta.gamma_summ <- function(samp_df, design, group = FALSE, tol = .01){
+  
+  ## Extract names of candidates
   candidate_names <- colnames(design)[-1]
-    
+  
+  ## Transform from array to tibble
   samples_beta_gamma <- samp_df %>%
     select(Chain, Iteration, starts_with("beta["),starts_with("gamma["))%>%
     pivot_longer(c(starts_with("beta"),starts_with("gamma")),
                  names_to = "Parameter",values_to = "Value") %>%
-    mutate(Name = as.integer(str_extract(Parameter,"[0-9]+")),
+    mutate(ID = as.integer(str_extract(Parameter,"[0-9]+")),
            Parameter = str_extract(Parameter,"[a-z]+")) %>%
     pivot_wider(names_from = Parameter,values_from = Value) %>%
     mutate(beta = ifelse(gamma, beta, NA),
-           Name = candidate_names[Name])
+           Name = candidate_names[ID])
   
-  summ_beta_gamma <- samples_beta_gamma %>%
+  ## Remove candidates with probability of presence of zero
+  samples_beta_gamma <- samples_beta_gamma %>%
+    group_by(ID) |> 
+    mutate(P = mean(gamma)) |> 
+    ungroup()
+  
+  summ_beta_gamma_1 <- samples_beta_gamma |> 
+    filter(P == 0) |> 
+    group_by(ID) |> 
+    summarize(ID = first(ID),
+              P_present = 0,
+              P_absent = 1 ,
+              Mean = NA,
+              Median = NA,
+              SD = NA,
+              Q2.5 = NA,
+              Q25 = NA,
+              Q75 = NA,
+              Q97.5 = NA,
+              .groups = "drop") |> 
+    mutate(Name = candidate_names[ID])
+  
+  if(group){
+    ## Identify candidates with similar isotope patterns
+    
+    max_diff <- function(u,v){ 
+      max(abs(u-v))
+    }
+    
+    ## Group candidates with similar isotope patterns
+    distance <- sapply(2:ncol(design), function(i){
+      sapply(2:ncol(design), function (j){
+        max_diff(design[,i],design[,j])
+      })})
+    
+    memb <- ifelse(distance < tol, 1, 0) |> 
+      igraph::graph_from_adjacency_matrix() |> 
+      igraph::as.undirected() |> 
+      igraph::cluster_fast_greedy() |> 
+      membership()
+    
+  }
+  else{
+    ##
+    memb <- 1:(ncol(design) - 1)
+  }
+  
+  samples_beta_gamma_2 <- samples_beta_gamma |> 
+    filter(P > 0) |> 
+    mutate(Group = memb[ID]) |> 
+    select(-ID)  |> 
+    group_by(Chain, Iteration, Group) |> 
+    summarize(beta = sum(beta, na.rm = TRUE),
+              gamma = 1*any(gamma == 1),
+              Name = paste0(Name, collapse = "/"),
+              .groups = "drop")
+  
+  summ_beta_gamma_2 <- samples_beta_gamma_2 %>%
     group_by(Name) %>%
+    mutate(beta = ifelse(gamma > 0, beta, NA)) |> 
     summarize(P_present = mean(gamma),
               P_absent = 1 - P_present,
               Mean = mean(beta, na.rm = TRUE),
@@ -65,7 +126,11 @@ beta.gamma_summ <- function(samp_df, design){
               Q75 = quantile(beta,.75,na.rm = TRUE),
               Q97.5 = quantile(beta,.975,na.rm = TRUE))
   
-  return(summ_beta_gamma)
+  ## Combine summary tables 
+  summ_beta_gamma_2 |> 
+    bind_rows(summ_beta_gamma_1) |> 
+    select(-ID) |> 
+    arrange(Name)
 } 
 
 mixtures_summ <- function(samp_df, design){

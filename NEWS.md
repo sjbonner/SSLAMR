@@ -1,3 +1,8 @@
+# SSLAMR 0.1.9
+
+* Adding grouping of candidates with similar isotope patterns when computing 
+posterior summary statistics for presence and abudance. 
+
 # SSLAMR 0.1.8
 
 * Added documentation for and exported simulate() function.
