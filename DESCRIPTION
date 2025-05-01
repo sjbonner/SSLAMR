@@ -21,6 +21,7 @@ Imports:
     dplyr,
     ecipex,
     glmnet,
+    igraph,
     readr,
     readxl,
     rjags,
