@@ -133,7 +133,7 @@ beta.gamma_summ <- function(samp_df, design, group = FALSE, tol = .01){
     arrange(Name)
 } 
 
-mixtures_summ <- function(samp_df, design){
+mixtures_summ <- function(samp_df, design, min_presence = .0001){
   
   ## Retrieve candidate names from design matrix
   candidate_names <- colnames(design)[-1]
@@ -185,7 +185,7 @@ mixtures_summ <- function(samp_df, design){
   
   ## Compute summaries
   mixtures2 |> 
-    filter(Presence > 0) |> 
+    filter(Presence > min_presence) |> 
     group_by(Mixture, p, Name) |> 
     summarise(Mean = mean(Abundance),
               Median = median(Abundance),
