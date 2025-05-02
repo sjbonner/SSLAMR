@@ -1,7 +1,11 @@
+# SSLARM 0.1.10
+
+* Restricted number of mixtures saved to Excel output file. 
+
 # SSLAMR 0.1.9
 
 * Adding grouping of candidates with similar isotope patterns when computing 
-posterior summary statistics for presence and abudance. 
+posterior summary statistics for presence and abundance. 
 
 # SSLAMR 0.1.8
 
