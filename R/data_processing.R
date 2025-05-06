@@ -395,7 +395,7 @@ max_diff <- function(u,v){
 
 group_by_pattern <- function(design, f = max_diff, tol = .05){
   ## Remove interval column from design
-  if("Interval" %in% colnames(results$data$design)) 
+  if("Interval" %in% colnames(design)) 
     design <- design |> 
       select(-Interval)
   
