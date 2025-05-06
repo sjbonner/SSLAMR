@@ -40,7 +40,7 @@ intercept_summ <- function(samp_df){
   return(summ_beta0)
 }
 
-beta.gamma_summ <- function(samp_df, design, group = FALSE, tol = .01){
+beta.gamma_summ <- function(samp_df, design, groups){
   
   ## Extract names of candidates
   candidate_names <- colnames(design)[-1]
@@ -77,16 +77,14 @@ beta.gamma_summ <- function(samp_df, design, group = FALSE, tol = .01){
               Q97.5 = NA,
               .groups = "drop") |> 
     mutate(Name = candidate_names[ID])
-
+  
   samples_beta_gamma_2 <- samples_beta_gamma |> 
-    filter(P > 0) |> 
-    mutate(Group = memb[ID]) |> 
-    select(-ID)  |> 
-    group_by(Chain, Iteration, Group) |> 
-    summarize(beta = sum(beta, na.rm = TRUE),
-              gamma = 1*any(gamma == 1),
-              Name = paste0(Name, collapse = "/"),
-              .groups = "drop")
+    filter(P > 0) |>
+    left_join(groups, by = "Name") |> 
+    group_by(Chain, Iteration, Group_ID) |> 
+    reframe(beta = sum(beta, na.rm = TRUE),
+            gamma = 1*any(gamma == 1),
+            Name = Group_Name)
   
   summ_beta_gamma_2 <- samples_beta_gamma_2 %>%
     group_by(Name) %>%

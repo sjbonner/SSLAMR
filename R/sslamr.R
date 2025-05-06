@@ -618,7 +618,10 @@ sslamr <- function(spectrum = NULL,
       
       if(verbose) message("    Summarizing beta and gamma")
       tic() 
-      bg.summ <- beta.gamma_summ(s.df, data$design, group = group_summary, tol = bg_tol)
+      bg.summ <- beta.gamma_summ(s.df, 
+                                 design = data$design, 
+                                 groups = data$groups)
+      
       toc_out <- toc(quiet = !verbose)
       timing <- timing |> 
         add_row(Stage = "Summarizing beta and gamma",
