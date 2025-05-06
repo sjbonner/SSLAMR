@@ -372,3 +372,36 @@ prescreen_data <- function(intervals,
   
   return(design1)
 }
+
+max_diff <- function(u,v){ 
+  max(abs(u-v))
+}
+
+group_by_pattern <- function(design, f = max_diff, tol = .05){
+  ## Remove interval column from design
+  if("Interval" %in% colnames(results$data$design)) 
+    design <- design |> 
+      select(-Interval)
+  
+  ## Compute pairwise distances between columns of design
+  distance <- sapply(1:ncol(design), function(i){
+    sapply(1:ncol(design), function(j){
+      f(design[,i],design[,j])
+    })
+  })
+  
+  ## Form groups
+  group <- ifelse(distance < tol, 1, 0) |> 
+    igraph::graph_from_adjacency_matrix() |> 
+    igraph::as.undirected() |> 
+    igraph::cluster_fast_greedy() |> 
+    igraph::membership()
+  
+  ## Concatenate names
+  group_data <- tibble(Name = colnames(design), 
+                       Group_ID = group) |> 
+    group_by(Group_ID) |> 
+    mutate(Group_Name = paste0(Name, collapse = "/"))
+  
+  group_data
+}

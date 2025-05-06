@@ -77,32 +77,7 @@ beta.gamma_summ <- function(samp_df, design, group = FALSE, tol = .01){
               Q97.5 = NA,
               .groups = "drop") |> 
     mutate(Name = candidate_names[ID])
-  
-  if(group){
-    ## Identify candidates with similar isotope patterns
-    
-    max_diff <- function(u,v){ 
-      max(abs(u-v))
-    }
-    
-    ## Group candidates with similar isotope patterns
-    distance <- sapply(2:ncol(design), function(i){
-      sapply(2:ncol(design), function (j){
-        max_diff(design[,i],design[,j])
-      })})
-    
-    memb <- ifelse(distance < tol, 1, 0) |> 
-      igraph::graph_from_adjacency_matrix() |> 
-      igraph::as.undirected() |> 
-      igraph::cluster_fast_greedy() |> 
-      igraph::membership()
-    
-  }
-  else{
-    ##
-    memb <- 1:(ncol(design) - 1)
-  }
-  
+
   samples_beta_gamma_2 <- samples_beta_gamma |> 
     filter(P > 0) |> 
     mutate(Group = memb[ID]) |> 
