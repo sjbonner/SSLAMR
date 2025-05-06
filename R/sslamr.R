@@ -323,7 +323,7 @@ sslamr_sample <- function(data,
 #'   data on the ratios of the elemental isotopes used by [ecipex()]. This
 #'   overrides the default isotope ratios. Otherwise, the information in
 #'   `isoinfo` is appended to the data used by [ecipex()]. (boolean)
-#' @param group_candidates If TRUE then group candidates with the same chemical
+#' @param group_formula If TRUE then group candidates with the same chemical
 #'   formula. (boolean)
 #' @param max_isotopes Maximum number of isotopes retained in the pattern of any
 #'   candidate. (numeric)
@@ -397,7 +397,7 @@ sslamr <- function(spectrum = NULL,
                    min_abundance = .001,
                    max_isotopes = Inf,
                    skip_isotopes = 0,
-                   group_candidates = NULL,
+                   group_formula = NULL,
                    group_summary= FALSE,
                    bg_tol = .05,
                    binning = TRUE,
@@ -508,28 +508,28 @@ sslamr <- function(spectrum = NULL,
     tic()
     
     # Group candidates with identical chemical formulas
-    if(!is.null(group_candidates)){
+    if(!is.null(group_formula)){
       # Group candidates has been set by user. Check setting is applicable.
-      if(group_candidates & !is.null(adducts))
-        stop("Error: Candidates cannot be grouped when adducts are included. Please set group_candidates to FALSE.\n")
+      if(group_formula & !is.null(adducts))
+        stop("Error: Candidates cannot be grouped when adducts are included. Please set group_formula to FALSE.\n")
 
     }
     else{
       # Group candidates not set by user but not applicable.
       if(!is.null(adducts)){
         if(verbose) message("   Adducts provided. Not grouping candidates...")
-        group_candidates <- FALSE
+        group_formula <- FALSE
       }
       else if(any(!is.na(candidates$Prior))){
         if(verbose) message("   Adducts provided. Not grouping candidates...")
-        group_candidates <- FALSE
+        group_formula <- FALSE
       }
       else{
-        group_candidates <- TRUE
+        group_formula <- TRUE
       }
     }
     
-    if(group_candidates){
+    if(group_formula){
       # Split candidates list
       candidates1 <- candidates %>%
         filter(!is.na(Prior))
