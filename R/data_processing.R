@@ -204,6 +204,8 @@ sslamr_data <- function(spectrum,
                         prescreen_prior = NULL,
                         prescreen_weight = FALSE,
                         rounding = "nearest",
+                        group_pattern = TRUE,
+                        pattern_tol = .05,
                         ran.seed=unclass(Sys.time()),
                         isoinfo = NULL,
                         verbose = FALSE){
@@ -319,12 +321,26 @@ sslamr_data <- function(spectrum,
   if(verbose)
     message("    ",nout," of ", nin, " candidates retained.")
   
+  # Identify groups by pattern
+  if(group_pattern){
+    if(verbose)
+      message("   Identyfing similar isotope patterns...")
+      
+    groups <- group_by_pattern(design, tol = pattern_tol)
+  }
+  else{
+    groups <- tibble(Name = colnames(design)[-1]) |> 
+      mutate(Group_ID = 1:n(),
+             Group_Name = Name)
+  }
+  
   # Return output  
   list(candidates = candidate_bins,
        intervals = intervals,
        spectrum = spectrum,
        counts = counts,
-       design = design)
+       design = design,
+       groups = groups)
   }
 
 prescreen_data <- function(intervals, 

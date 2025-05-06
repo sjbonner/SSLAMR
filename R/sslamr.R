@@ -364,12 +364,12 @@ sslamr_sample <- function(data,
 #' value will be retained in the analysis regardless of the counts in the associated 
 #' intervals. (numeric)
 #' @param n.thin Thinning parameter for MCMC sampler. (integer)
-#' @param group_summary If TRUE then candidates with similar isotope pattens are 
+#' @param group_pattern If TRUE then candidates with similar isotope pattens are 
 #' grouped when computing posterior summary statistics for presence and 
 #' abundance. (boolean)
-#' @param bg_tol Tolerance for grouping candidates with similar isotope patterns. 
-#' If `group_summary` is true then candidates with a maximum difference of their 
-#' isotope patterns less than `bg_tol` are grouped when computing posterior 
+#' @param pattern_tol Tolerance for grouping candidates with similar isotope patterns. 
+#' If `group_pattern` is true then candidates with a maximum difference of their 
+#' isotope patterns less than `pattern_tol` are grouped when computing posterior 
 #' summary statistics for the presence and abundance. (numeric)
 #'
 #' @importFrom writexl write_xlsx
@@ -398,8 +398,8 @@ sslamr <- function(spectrum = NULL,
                    max_isotopes = Inf,
                    skip_isotopes = 0,
                    group_formula = NULL,
-                   group_summary= FALSE,
-                   bg_tol = .05,
+                   group_pattern= TRUE,
+                   pattern_tol = .05,
                    binning = TRUE,
                    epsilon = .05,
                    min_mass_charge = NULL,
@@ -574,6 +574,8 @@ sslamr <- function(spectrum = NULL,
                         prescreen_prior = prescreen_prior,
                         prescreen_weight = prescreen_weight,
                         rounding = rounding,
+                        group_pattern = group_pattern,
+                        pattern_tol = pattern_tol,
                         isoinfo = isoinfo,
                         verbose = verbose)
     toc_out <- toc(quiet = !verbose)
