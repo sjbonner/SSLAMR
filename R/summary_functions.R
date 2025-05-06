@@ -106,41 +106,60 @@ beta.gamma_summ <- function(samp_df, design, groups){
     arrange(Name)
 } 
 
-mixtures_summ <- function(samp_df, design, min_prob = .0001){
+mixtures_summ <- function(samp_df, 
+                          design, 
+                          groups,
+                          min_prob = .0001){
   
   ## Retrieve candidate names from design matrix
   candidate_names <- colnames(design)[-1]
   
   ## Extract presence indicators
   gamma <- samp_df |> 
-    select(starts_with("gamma")) |>
-    rowid_to_column(var = "Iteration") |> 
+    select(Chain, Iteration, starts_with("gamma")) |>
     pivot_longer(starts_with("gamma"),names_to = "Parameter",values_to = "Presence")|> 
     mutate(Name = candidate_names[as.integer(str_extract(Parameter,"[0-9]+"))]) |> 
     select(-Parameter) 
   
+  ## Group presence indicators
+  gamma <- gamma |> 
+    left_join(groups, by = "Name") |> 
+    select(-Name) |> 
+    group_by(Chain, Iteration, Group_Name) |> 
+    summarize(Presence = 1 * (sum(Presence) > 0),
+              .groups = "drop") |> 
+    rename(Name = Group_Name)
+  
   ## Extract abundance values
   beta <- samp_df |> 
-    select(starts_with("beta[")) |>
-    rowid_to_column(var = "Iteration") |> 
+    select(Chain, Iteration, starts_with("beta[")) |>
     pivot_longer(starts_with("beta["),names_to = "Parameter",values_to = "Abundance")|> 
     mutate(Name = candidate_names[as.integer(str_extract(Parameter,"[0-9]+"))]) |> 
     select(-Parameter) 
   
+  ## Group abundances
+  beta <- beta |> 
+    left_join(groups, by = "Name") |> 
+    select(-Name) |> 
+    group_by(Chain, Iteration, Group_Name) |> 
+    summarize(Abundance = sum(Abundance),
+              .groups = "drop") |> 
+    rename(Name = Group_Name)
+  
   ## Label mixtures using dplyr's default sorting
   mixtures1 <- gamma |> 
     pivot_wider(names_from = Name, values_from = Presence) |> 
-    group_by(across(-c(Iteration))) |> 
+    group_by(across(-c(Chain, Iteration))) |> 
     mutate(Label = cur_group_id()) |> 
     ungroup() |> 
-    select(Iteration, Label)
+    select(Chain, Iteration, Label)
   
   gamma <- mixtures1 |> 
-    full_join(gamma, by = "Iteration")
+    full_join(gamma, by = c("Chain","Iteration"))
   
   ## Compute occurrences and proportions for each unique mixture
   mixtures1 <- mixtures1 |>  
-    group_by(across(-c(Iteration))) |>
+    group_by(across(-c(Chain, Iteration))) |>
     summarize(n=n(),.groups = "drop") |> 
     mutate(p = n/sum(n))
   
@@ -152,9 +171,8 @@ mixtures_summ <- function(samp_df, design, min_prob = .0001){
   ## Combine proportions, presence, and abundance
   mixtures2 <- mixtures1 |> 
     full_join(gamma, by = "Label") |> 
-    left_join(beta, by = c("Iteration","Name")) |> 
-    select(-Iteration) |> 
-    select(-Label)
+    left_join(beta, by = c("Chain","Iteration","Name")) |> 
+    select(-Chain, -Iteration, - Label)
   
   ## Compute summaries
   mixtures2 |> 

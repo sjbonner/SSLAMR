@@ -630,7 +630,11 @@ sslamr <- function(spectrum = NULL,
       if(mixtures){
         if(verbose) message("    Summarizing mixtures... be patient...")
         tic() 
-        mixtures.summ <- mixtures_summ(s.df, data$design)
+        mixtures.summ <- mixtures_summ(
+          samp_df = s.df, 
+          design = data$design,
+          groups = data$groups)
+        
         toc_out <- toc(quiet = !verbose)
         timing <- timing |> 
           add_row(Stage = "Summarizing mixtures",
