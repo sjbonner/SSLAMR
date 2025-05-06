@@ -14,9 +14,9 @@ sslamr(
   min_abundance = 0.001,
   max_isotopes = Inf,
   skip_isotopes = 0,
-  group_candidates = NULL,
-  group_summary = FALSE,
-  bg_tol = 0.05,
+  group_formula = NULL,
+  group_pattern = TRUE,
+  pattern_tol = 0.05,
   binning = TRUE,
   epsilon = 0.05,
   min_mass_charge = NULL,
@@ -78,16 +78,16 @@ that are ignored. Defaults to 0 implying that all isotopes with relative
 abundance greater than \code{min_abundance} up to \code{max_isotopes} will be
 retained in the patter of any candidate. (numeric)}
 
-\item{group_candidates}{If TRUE then group candidates with the same chemical
+\item{group_formula}{If TRUE then group candidates with the same chemical
 formula. (boolean)}
 
-\item{group_summary}{If TRUE then candidates with similar isotope pattens are
+\item{group_pattern}{If TRUE then candidates with similar isotope pattens are
 grouped when computing posterior summary statistics for presence and
 abundance. (boolean)}
 
-\item{bg_tol}{Tolerance for grouping candidates with similar isotope patterns.
-If \code{group_summary} is true then candidates with a maximum difference of their
-isotope patterns less than \code{bg_tol} are grouped when computing posterior
+\item{pattern_tol}{Tolerance for grouping candidates with similar isotope patterns.
+If \code{group_pattern} is true then candidates with a maximum difference of their
+isotope patterns less than \code{pattern_tol} are grouped when computing posterior
 summary statistics for the presence and abundance. (numeric)}
 
 \item{binning}{Specifies how the peaks in the spectrum and the entries in the

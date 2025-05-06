@@ -1,4 +1,9 @@
-# SSLARM 0.1.10
+# SSLAMR 0.1.11 (May 6, 2025)
+
+* Added grouping of candidates with similar isotope patterns when
+computing posterior summary statistics for mixtures. 
+
+# SSLAMR 0.1.10
 
 * Restricted number of mixtures saved to Excel output file. 
 
