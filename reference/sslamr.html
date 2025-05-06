@@ -13,7 +13,7 @@ simultaneously identify and quantify compounds of interest within a sample."></h
 
     <a class="navbar-brand me-2" href="../index.html">SSLAMR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,9 +57,9 @@ simultaneously identify and quantify compounds of interest within a sample.</p>
 <span>  min_abundance <span class="op">=</span> <span class="fl">0.001</span>,</span>
 <span>  max_isotopes <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  skip_isotopes <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  group_candidates <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  group_summary <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  bg_tol <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  group_formula <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  group_pattern <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  pattern_tol <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  binning <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  epsilon <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  min_mass_charge <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -143,21 +143,21 @@ abundance greater than <code>min_abundance</code> up to <code>max_isotopes</code
 retained in the patter of any candidate. (numeric)</p></dd>
 
 
-<dt id="arg-group-candidates">group_candidates<a class="anchor" aria-label="anchor" href="#arg-group-candidates"></a></dt>
+<dt id="arg-group-formula">group_formula<a class="anchor" aria-label="anchor" href="#arg-group-formula"></a></dt>
 <dd><p>If TRUE then group candidates with the same chemical
 formula. (boolean)</p></dd>
 
 
-<dt id="arg-group-summary">group_summary<a class="anchor" aria-label="anchor" href="#arg-group-summary"></a></dt>
+<dt id="arg-group-pattern">group_pattern<a class="anchor" aria-label="anchor" href="#arg-group-pattern"></a></dt>
 <dd><p>If TRUE then candidates with similar isotope pattens are
 grouped when computing posterior summary statistics for presence and
 abundance. (boolean)</p></dd>
 
 
-<dt id="arg-bg-tol">bg_tol<a class="anchor" aria-label="anchor" href="#arg-bg-tol"></a></dt>
+<dt id="arg-pattern-tol">pattern_tol<a class="anchor" aria-label="anchor" href="#arg-pattern-tol"></a></dt>
 <dd><p>Tolerance for grouping candidates with similar isotope patterns.
-If <code>group_summary</code> is true then candidates with a maximum difference of their
-isotope patterns less than <code>bg_tol</code> are grouped when computing posterior
+If <code>group_pattern</code> is true then candidates with a maximum difference of their
+isotope patterns less than <code>pattern_tol</code> are grouped when computing posterior
 summary statistics for the presence and abundance. (numeric)</p></dd>
 
 
