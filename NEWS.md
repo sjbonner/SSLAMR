@@ -1,3 +1,9 @@
+# SSLAMR 0.1.12 (May 8, 2025)
+
+* Incorporated grouping of the candidates into the greedy algorithm. This avoids
+overpenalizing the greedy algorithm when it fits one candidate out of a group
+and discards the rest.
+
 # SSLAMR 0.1.11 (May 6, 2025)
 
 * Added grouping of candidates with similar isotope patterns when
