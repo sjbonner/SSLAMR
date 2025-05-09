@@ -368,9 +368,15 @@ prescreen_data <- function(intervals,
     summarise(Count = ifelse(prescreen_weight, sum(Weight * Count), sum(Count))) 
   
   # Retain candidates with average counts greater than prescreen or prior inclusion probability of 1
-  retain <- enframe(prior_par$gamma$p, name = "Name", value = "Prior") |> 
-    left_join(counts_by_canidadate, by = "Name") |> 
-    filter(Count >= prescreen | Prior >= prescreen_prior)
+  if(!is.null(prior_par)){
+    retain <- enframe(prior_par$gamma$p, name = "Name", value = "Prior") |> 
+      left_join(counts_by_canidadate, by = "Name") |> 
+      filter(Count >= prescreen | Prior >= prescreen_prior)
+  }
+  else{
+    retain <- counts_by_canidadate |> 
+      filter(Count >= prescreen)
+  }
   
   design1 <- design |>
     select(Interval, all_of(pull(retain, "Name")))
