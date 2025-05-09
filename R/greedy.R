@@ -66,7 +66,7 @@ greedy_fit <- function(data,
   continue <- TRUE
 
   while(continue){
-    # Remove any candidates associated with all empty intervals
+     # Remove any candidates associated with all empty intervals
     design1 <- design1 |> 
       mutate(Counts = Count[Interval]) |> 
       group_by(Name) |> 
@@ -78,7 +78,6 @@ greedy_fit <- function(data,
     fits <- design1 |> 
       mutate(Counts = Count[Interval]) |> 
       group_by(Name) |> 
-      mutate(Total = sum(Count)) |> 
       summarize(fit_single(first(Name), Value, Count[Interval]),
                 .groups = "drop") |> 
       filter(Abundance > 0) |>
@@ -297,7 +296,7 @@ greedy_fit_2 <- function(spectrum = NULL,
   
   # Add parent information
   design <- design |> 
-    left_join(data$candidates |> select(Name = ID, Parent), by = "Name")
+    left_join(data$candidates |> select(Name = ID, Parent) |> distinct(), by = "Name")
   
   # Extract observed counts
   Count <- data$counts |> 
@@ -308,7 +307,15 @@ greedy_fit_2 <- function(spectrum = NULL,
   
   continue <- TRUE
   
+  if(verbose){
+    message("Fitting model ...\n")
+    pb <- txtProgressBar(max = length(unique(design$Name)), style = 1)
+    k <- 1
+  }
+  
   while(continue){
+    if(verbose)
+      setTxtProgressBar(pb, k)
     
     # Remove candidates whose parents are not yet in the model
     if(nrow(output) == 0){
@@ -365,6 +372,9 @@ greedy_fit_2 <- function(spectrum = NULL,
       # Update design matrix  
       design <- design |> 
         filter(Name != name)
+      
+      if(verbose)
+        k <- k + 1
     }
     else{
       continue <- FALSE
