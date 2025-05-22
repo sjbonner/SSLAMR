@@ -605,16 +605,53 @@ sslamr <- function(spectrum = NULL,
         add_row(Stage = "Running sampler",
                 Time = toc_out$toc - toc_out$tic)
 
-      
       # Convert burnin to data frame
       b.df <- get_samples_df(ss.model$burnin)
       
       # Convert samples to a data frame
-      s.df <- get_samples_df(ss.model$samples)
+      s.df <- get_samples_df(ss.model$samples) %>%
+        pivot_longer(-c(Chain,Iteration),names_to = "Parameter",values_to = "Value") %>%
+        mutate(ID = ifelse(Parameter %in% c("beta0","beta_tmp_sd"), NA, 
+                       as.integer(str_extract(Parameter,"[0-9]+"))),
+               Parameter = ifelse(Parameter %in% c("beta0","beta_tmp_sd"), Parameter,
+                                  str_extract(Parameter,"[a-z]+"))) %>%
+        mutate(Name = ifelse(Parameter %in% c("beta","gamma"),colnames(data$design)[ID+1],NA))
       
       # results
       if(verbose) message("Summarizing results...")
       
+      # Identify groups by pattern
+      if(group_pattern){
+        if(verbose)
+          message("   Identyfing similar isotope patterns...")
+        
+        # Remove candidates which never appear
+        not_present <- s.df |> 
+          filter(Parameter == "gamma") |> 
+          group_by(Name,ID) |> 
+          summarize(Any = any(Value > 0),
+                    .groups = "drop") |>
+          filter(!Any)
+          
+        # Group remaining candidates
+        groups <- group_by_pattern(data$design[-c(1,pull(not_present,"ID") + 1)], 
+                                   tol = pattern_tol)
+        
+        # Recombine
+        data$groups <- groups |>
+          select(-Group_ID) |> 
+          bind_rows(tibble(Name = not_present |> pull("Name"),
+                           Group_Name = not_present |> pull("Name"))) |> 
+          arrange(Group_Name) |> 
+          group_by(Group_Name) |>
+          mutate(Group_ID = cur_group_id())
+      }
+      else{
+        # Assign each candidate to its own group
+        data$groups <- tibble(Name = colnames(design)) |> 
+          mutate(Group_ID = 1:n(),
+                 Group_Name = Name)
+      }
       
       if(verbose) message("    Summarizing beta and gamma")
       tic() 
