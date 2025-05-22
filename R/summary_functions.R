@@ -10,32 +10,34 @@ get_samples_df <- function(samples){
 beta_sd_summ <- function(samp_df){
   
   samples_beta_sd <- samp_df %>%
-    select(Chain, Iteration, beta_tmp_sd)
+    filter(Parameter == "Value") %>%
+    select(Chain, Iteration, Value)
   
   summ_beta_sd <- samples_beta_sd %>%
-    summarize(Mean = mean(beta_tmp_sd, na.rm = TRUE),
-              Median = median(beta_tmp_sd, na.rm = TRUE),
-              SD = sd(beta_tmp_sd, na.rm = TRUE),
-              Q2.5 = quantile(beta_tmp_sd,.025,na.rm = TRUE),
-              Q25 = quantile(beta_tmp_sd,.25,na.rm = TRUE),
-              Q75 = quantile(beta_tmp_sd,.75,na.rm = TRUE),
-              Q97.5 = quantile(beta_tmp_sd,.975,na.rm = TRUE))
+    summarize(Mean = mean(Value, na.rm = TRUE),
+              Median = median(Value, na.rm = TRUE),
+              SD = sd(Value, na.rm = TRUE),
+              Q2.5 = quantile(Value,.025,na.rm = TRUE),
+              Q25 = quantile(Value,.25,na.rm = TRUE),
+              Q75 = quantile(Value,.75,na.rm = TRUE),
+              Q97.5 = quantile(Value,.975,na.rm = TRUE))
   
   return(summ_beta_sd)
 }
 
 intercept_summ <- function(samp_df){
   samples_beta0 <- samp_df %>%
-    select(Chain, Iteration, beta0)
+    filter(Parameter == "beta0") %>%
+    select(Chain, Iteration, Value)
   
   summ_beta0 <- samples_beta0 %>%
-    summarize(Mean = mean(beta0, na.rm = TRUE),
-              Median = median(beta0, na.rm = TRUE),
-              SD = sd(beta0, na.rm = TRUE),
-              Q2.5 = quantile(beta0,.025,na.rm = TRUE),
-              Q25 = quantile(beta0,.25,na.rm = TRUE),
-              Q75 = quantile(beta0,.75,na.rm = TRUE),
-              Q97.5 = quantile(beta0,.975,na.rm = TRUE))
+    summarize(Mean = mean(Value, na.rm = TRUE),
+              Median = median(Value, na.rm = TRUE),
+              SD = sd(Value, na.rm = TRUE),
+              Q2.5 = quantile(Value,.025,na.rm = TRUE),
+              Q25 = quantile(Value,.25,na.rm = TRUE),
+              Q75 = quantile(Value,.75,na.rm = TRUE),
+              Q97.5 = quantile(Value,.975,na.rm = TRUE))
   
   return(summ_beta0)
 }
@@ -47,17 +49,11 @@ beta.gamma_summ <- function(samp_df, design, groups){
   
   ## Transform from array to tibble
   samples_beta_gamma <- samp_df %>%
-    select(Chain, Iteration, starts_with("beta["),starts_with("gamma["))%>%
-    pivot_longer(c(starts_with("beta"),starts_with("gamma")),
-                 names_to = "Parameter",values_to = "Value") %>%
-    mutate(ID = as.integer(str_extract(Parameter,"[0-9]+")),
-           Parameter = str_extract(Parameter,"[a-z]+")) %>%
-    pivot_wider(names_from = Parameter,values_from = Value) %>%
-    mutate(beta = ifelse(gamma, beta, NA),
-           Name = candidate_names[ID])
-  
+    filter(Parameter %in% c("beta","gamma")) |>
+    pivot_wider(names_from = Parameter, values_from = Value)
+
   ## Remove candidates with probability of presence of zero
-  samples_beta_gamma <- samples_beta_gamma %>%
+  samples_beta_gamma <- samples_beta_gamma |> 
     group_by(ID) |> 
     mutate(P = mean(gamma)) |> 
     ungroup()
@@ -114,35 +110,31 @@ mixtures_summ <- function(samp_df,
   ## Retrieve candidate names from design matrix
   candidate_names <- colnames(design)[-1]
   
-  ## Extract presence indicators
+   ## Extract presence indicators
   gamma <- samp_df |> 
-    select(Chain, Iteration, starts_with("gamma")) |>
-    pivot_longer(starts_with("gamma"),names_to = "Parameter",values_to = "Presence")|> 
-    mutate(Name = candidate_names[as.integer(str_extract(Parameter,"[0-9]+"))]) |> 
-    select(-Parameter) 
+    filter(Parameter == "gamma") |> 
+    select(Chain, Iteration, Name, Value) 
   
   ## Group presence indicators
   gamma <- gamma |> 
     left_join(groups, by = "Name") |> 
     select(-Name) |> 
     group_by(Chain, Iteration, Group_Name) |> 
-    summarize(Presence = 1 * (sum(Presence) > 0),
+    summarize(Presence = 1 * (sum(Value) > 0),
               .groups = "drop") |> 
     rename(Name = Group_Name)
   
   ## Extract abundance values
   beta <- samp_df |> 
-    select(Chain, Iteration, starts_with("beta[")) |>
-    pivot_longer(starts_with("beta["),names_to = "Parameter",values_to = "Abundance")|> 
-    mutate(Name = candidate_names[as.integer(str_extract(Parameter,"[0-9]+"))]) |> 
-    select(-Parameter) 
+    filter(Parameter == "beta") |> 
+    select(Chain, Iteration, Name, Value) 
   
   ## Group abundances
   beta <- beta |> 
     left_join(groups, by = "Name") |> 
     select(-Name) |> 
     group_by(Chain, Iteration, Group_Name) |> 
-    summarize(Abundance = sum(Abundance),
+    summarize(Abundance = sum(Value),
               .groups = "drop") |> 
     rename(Name = Group_Name)
   
@@ -193,9 +185,8 @@ mixtures_summ <- function(samp_df,
 fitted_summ <- function(samp_df, counts){
   
   samples_mu <- samp_df %>%
-    select(Chain, Iteration, starts_with("mu")) %>%
-    pivot_longer(starts_with("mu"),names_to = "Parameter", values_to = "Fitted") %>%
-    mutate(Interval = as.integer(str_extract(Parameter,"[0-9]+"))) %>%
+    filter(Parameter == "mu") |> 
+    select(Chain, Iteration, Interval = ID, Fitted = Value) |> 
     full_join(select(counts,Interval,Count), by = "Interval") %>%
     group_by(Chain, Iteration) %>%
     mutate(Residual = Count - Fitted,
