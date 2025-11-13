@@ -1,21 +1,11 @@
 greedy_fit_single <- function(name, x, count){
   
-  fit <- glmnet(cbind(1,x),
-                count,
-                family = poisson(link = "identity"),
-                #intercept = FALSE,
-                lower.limits = 0, 
-                lambda = 0)
-  
   fit1 <- glm(count ~ x,
               family = poisson(link = "identity"),
               start = c(mean(count),0))
   
   # Extract output values
   # 1) Coefficients
-  #coeffs <- fit$beta %>%
-  #  as.vector()
-  
   coeffs <- fit1$coefficients
   
   # 2) Deviance
