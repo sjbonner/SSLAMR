@@ -1,4 +1,4 @@
-fit_single <- function(name, x, count){
+greedy_fit_single <- function(name, x, count){
   
   fit <- glmnet(cbind(1,x),
                 count,
@@ -78,7 +78,7 @@ greedy_fit <- function(data,
     fits <- design1 |> 
       mutate(Counts = Count[Interval]) |> 
       group_by(Name) |> 
-      summarize(fit_single(first(Name), Value, Count[Interval]),
+      summarize(greedy_fit_singl(first(Name), Value, Count[Interval]),
                 .groups = "drop") |> 
       filter(Abundance > 0) |>
       arrange(`p-value`)
@@ -342,7 +342,7 @@ greedy_fit_2 <- function(spectrum = NULL,
       mutate(Counts = Count[Interval]) |> 
       group_by(Name) |> 
       mutate(Total = sum(Count)) |> 
-      summarize(fit_single(first(Name), Proportion, Count[Interval]),
+      summarize(greedy_fit_singl(first(Name), Proportion, Count[Interval]),
                 .groups = "drop") |> 
       filter(Abundance > 0) |>
       arrange(`p-value`)
