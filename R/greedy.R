@@ -68,7 +68,7 @@ greedy_fit <- function(data,
     fits <- design1 |> 
       mutate(Counts = Count[Interval]) |> 
       group_by(Name) |> 
-      summarize(greedy_fit_singl(first(Name), Value, Count[Interval]),
+      summarize(greedy_fit_single(first(Name), Value, Count[Interval]),
                 .groups = "drop") |> 
       filter(Abundance > 0) |>
       arrange(`p-value`)
@@ -332,7 +332,7 @@ greedy_fit_2 <- function(spectrum = NULL,
       mutate(Counts = Count[Interval]) |> 
       group_by(Name) |> 
       mutate(Total = sum(Count)) |> 
-      summarize(greedy_fit_singl(first(Name), Proportion, Count[Interval]),
+      summarize(greedy_fit_single(first(Name), Proportion, Count[Interval]),
                 .groups = "drop") |> 
       filter(Abundance > 0) |>
       arrange(`p-value`)
