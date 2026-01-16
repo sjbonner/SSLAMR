@@ -117,6 +117,7 @@ greedy_fit_2 <- function(spectrum = NULL,
                          replace_isoinfo = FALSE,
                          min_abundance = .001,
                          group_formula = NULL,
+                         group_pattern = TRUE,
                          pattern_tol = .05,
                          binning = TRUE,
                          epsilon = .05,
@@ -291,7 +292,7 @@ greedy_fit_2 <- function(spectrum = NULL,
     pull("Count")
   
   # Initialize output table
-  output <- tibble()
+  results <- tibble()
   
   continue <- TRUE
   
@@ -306,17 +307,16 @@ greedy_fit_2 <- function(spectrum = NULL,
       setTxtProgressBar(pb, k)
     
     # Remove candidates whose parents are not yet in the model
-    if(nrow(output) == 0){
+    if(nrow(results) == 0){
       design1 <- design |> 
         filter(Parent == Name)
     }
     else{
       design1 <- design |> 
-        mutate(Keep = (Parent == Name) + (Parent %in% output$Name)) |>
+        mutate(Keep = (Parent == Name) + (Parent %in% results$Name)) |>
         filter(Keep > 0)
     }
    
-    
     # Remove any candidates associated with all empty intervals
     design1 <- design1 |> 
       mutate(Counts = Count[Interval]) |> 
@@ -338,7 +338,7 @@ greedy_fit_2 <- function(spectrum = NULL,
     if(fits$`p-value`[1] < critical){
       
       # Save fit information
-      output <- output |> 
+      results <- results |> 
         bind_rows(fits[1,])
       
       # Subtract from counts
@@ -369,9 +369,56 @@ greedy_fit_2 <- function(spectrum = NULL,
     }
   }
   
+  output <- list(original = results)
+  
+  if(group_pattern){
+    
+    # Identify pattern groups
+    pattern_groups <- data$design |> 
+      group_by_pattern()
+    
+    # Restrict to candidates in results
+    test <- results |> 
+      left_join(pattern_groups, by = "Name") |> 
+      select(Group_ID, Group_Name) |> 
+      arrange(Group_ID) |> 
+      unique()
+    
+    # Split group names to identify potential candidates
+    test1 <- test |>
+      separate_longer_delim(Group_Name, delim = "/") |> 
+      rename(Name = Group_Name) |> 
+      left_join(select(candidates, Name, Parent), by = "Name")
+    
+    # Keep only candidates whose parents are also in results
+    test2 <- test1 |> 
+      mutate(Keep = (Parent %in% pull(test1,Name))) |> 
+      filter(Keep) |> 
+      select(Group_ID, Name)
+    
+    # Rebuild group names
+    test3 <- test2 |> 
+      group_by(Group_ID) |> 
+      arrange(Name) |> 
+      mutate(Group_Name = paste(Name, collapse = "/")) |> 
+      ungroup() |> 
+      select(Name, Group_Name)
+    
+    # Compile group output
+    group_results <- results |> 
+      left_join(test3, by = "Name") |> 
+      select(Group_Name, Abundance) |> 
+      group_by(Group_Name) |>
+      summarize(Abundance = sum(Abundance),
+                .groups = "drop")
+    
+    output$grouped <- group_results
+  }  
+  
   # Save output
-  write_xlsx(list(coefficeints = output),
+  write_xlsx(output,
              path = xlsx_out)
   
-  return(output)
+  return(list(data = list(design),
+              output = output))
 }
