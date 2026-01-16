@@ -1,4 +1,4 @@
-greedy_fit_single <- function(name, x, count){
+thrash_fit_single <- function(name, x, count){
   
   fit1 <- glm(count ~ x,
               family = poisson(link = "identity"),
@@ -20,115 +20,26 @@ greedy_fit_single <- function(name, x, count){
          `p-value` = p_val)
 }
 
-greedy_fit <- function(data,
-                       xlsx_out = NULL, 
-                       critical = .05){
 
-  # Group candidates
-  if(!is.null(data$groups)){
-    design1 <- data$design |> 
-      pivot_longer(-Interval,
-                   names_to = "Name",
-                   values_to = "Value") |> 
-      left_join(data$groups, by = "Name") |> 
-      group_by(Group_Name, Interval) |> 
-      summarize(Value = mean(Value),
-                .groups = "drop") |> 
-      rename(Name = Group_Name)
-  }
-  else{
-    design1 <- data$design |> 
-      pivot_longer(-Interval,
-                   names_to = "Name",
-                   values_to = "Value")
-  }
-  
-  # Extract positive values
-  design1 <- design1 |> 
-    filter(Value > 0) 
-  
-  # Extract observed counts
-  Count <- data$counts |> 
-    pull("Count")
-  
-  output <- tibble()
-  
-  continue <- TRUE
-
-  while(continue){
-     # Remove any candidates associated with all empty intervals
-    design1 <- design1 |> 
-      mutate(Counts = Count[Interval]) |> 
-      group_by(Name) |> 
-      mutate(Total = sum(Counts)) |> 
-      filter(Total > 0) |> 
-      select(-Total)
-    
-    # Fit models separately for each candidate
-    fits <- design1 |> 
-      mutate(Counts = Count[Interval]) |> 
-      group_by(Name) |> 
-      summarize(greedy_fit_single(first(Name), Value, Count[Interval]),
-                .groups = "drop") |> 
-      filter(Abundance > 0) |>
-      arrange(`p-value`)
-
-    if(fits$`p-value`[1] < critical){
-      
-      # Save fit information
-      output <- output |> 
-        bind_rows(fits[1,])
-      
-      # Subtract from counts
-      name <- fits |> 
-        head(1) |> 
-        pull("Name")
-      
-      abund <- fits |> 
-        head(1) |> 
-        pull("Abundance")
-      
-      tmp <- design1 |> 
-        filter(Name == name)
-      
-      Count[tmp$Interval] <- (Count[tmp$Interval] - tmp$Value * abund) %>%
-        round() %>%
-        pmax(0)
-
-      # Update design matrix  
-      design1 <- design1 |> 
-        filter(Name != name)
-    }
-    else{
-      continue <- FALSE
-    }
-  }
-    
-  # Save output
-  write_xlsx(output, 
-             path = xlsx_out)
-}
-
-greedy_fit_2 <- function(spectrum = NULL,
-                         candidates = NULL,
-                         isotope_data = NULL,
-                         adducts = NULL,
-                         isoinfo = NULL,
-                         replace_isoinfo = FALSE,
-                         min_abundance = .001,
-                         group_formula = NULL,
-                         pattern_tol = .05,
-                         binning = TRUE,
-                         epsilon = .05,
-                         rounding = "nearest",
-                         min_mass_charge = NULL,
-                         max_mass_charge = NULL,
-                         prescreen = 0,
-                         prescreen_prior = 1,
-                         prescreen_weight = FALSE,
-                         critical = .05,
-                         xlsx_out = NULL,
-                         verbose = TRUE){
+thrash_fit <- function(spectrum = NULL,
+                       candidates = NULL,
+                       isotope_data = NULL,
+                       adducts = NULL,
+                       isoinfo = NULL,
+                       replace_isoinfo = FALSE,
+                       min_abundance = .001,
+                       group_formula = NULL,
+                       binning = TRUE,
+                       epsilon = .05,
+                       rounding = "nearest",
+                       min_mass_charge = NULL,
+                       max_mass_charge = NULL,
+                       prescreen = 0,
+                       prescreen_prior = 1,
+                       prescreen_weight = FALSE,
+                       critical = .05,
+                       xlsx_out = NULL,
+                       verbose = TRUE){
   
   # Check input
   if (is.null(spectrum))
@@ -315,7 +226,7 @@ greedy_fit_2 <- function(spectrum = NULL,
         mutate(Keep = (Parent == Name) + (Parent %in% output$Name)) |>
         filter(Keep > 0)
     }
-   
+    
     
     # Remove any candidates associated with all empty intervals
     design1 <- design1 |> 
@@ -330,7 +241,7 @@ greedy_fit_2 <- function(spectrum = NULL,
       mutate(Counts = Count[Interval]) |> 
       group_by(Name) |> 
       mutate(Total = sum(Count)) |> 
-      summarize(greedy_fit_single(first(Name), Proportion, Count[Interval]),
+      summarize(greedy_fit_singl(first(Name), Proportion, Count[Interval]),
                 .groups = "drop") |> 
       filter(Abundance > 0) |>
       arrange(`p-value`)
@@ -370,6 +281,6 @@ greedy_fit_2 <- function(spectrum = NULL,
   }
   
   # Save output
-  write_xlsx(list(coefficeints = output),
+  write_xlsx(list(coefficients = output),
              path = xlsx_out)
 }
