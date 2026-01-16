@@ -58,14 +58,14 @@ data file or an existing data frame. See Input Details for further
 information. (character or dataframe)}
 
 \item{isoinfo}{Custom element isotope information that either replaces or
-adds to the definitions in \code{\link[=ecipex]{ecipex()}} (see replace_isoinfo). May be a
+adds to the definitions in \code{\link[ecipex:ecipex]{ecipex::ecipex()}} (see replace_isoinfo). May be a
 string specifying the path to the data file or an existing data frame. See
 Input Details for further information. (character or dataframe)}
 
 \item{replace_isoinfo}{If TRUE then the information in \code{isoinfo} replaces the
-data on the ratios of the elemental isotopes used by \code{\link[=ecipex]{ecipex()}}. This
+data on the ratios of the elemental isotopes used by \code{\link[ecipex:ecipex]{ecipex::ecipex()}}. This
 overrides the default isotope ratios. Otherwise, the information in
-\code{isoinfo} is appended to the data used by \code{\link[=ecipex]{ecipex()}}. (boolean)}
+\code{isoinfo} is appended to the data used by \code{\link[ecipex:ecipex]{ecipex::ecipex()}}. (boolean)}
 
 \item{min_abundance}{Minimum proportion retained within candidate isotope
 patterns. (numeric)}
@@ -208,7 +208,7 @@ candidates.
 
 The \code{isotope_data} may either be \code{NULL} (default), a string, or a data
 frame. If \code{NULL} then the relative abundances for the isotope of the
-candidates are computed with the \code{\link[=ecipex]{ecipex()}} function. If a string then it
+candidates are computed with the \code{\link[ecipex:ecipex]{ecipex::ecipex()}} function. If a string then it
 is interpreted as the path to a file containing the processed isotope data
 and is read with \code{\link[=read_any]{read_any()}}. Otherwise, it is assumed to be a data frame.
 The data must contain five columns: \code{ID}, \code{Charge}, \code{Isotope}, \code{Mass}, and

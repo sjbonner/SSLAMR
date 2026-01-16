@@ -1,3 +1,10 @@
+# SSLAMR 0.1.14 (January 16, 2026)
+
+* Happy New Year!
+* Re-implement grouping based on isotope pattern for the greedy algorithm. Some
+candidates were being included in groups even if their parents weren't included. 
+This should not be allowed. 
+
 # SSLAMR 0.1.12 (May 8, 2025)
 
 * Incorporated grouping of the candidates into the greedy algorithm. This avoids

@@ -493,7 +493,6 @@ sslamr <- function(spectrum = NULL,
         add_column(Prior = NA)
     }
     
-    
     # Modify candidates via adducts
     if(!is.null(adducts)){
       candidates <- candidates %>%

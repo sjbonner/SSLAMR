@@ -19,7 +19,7 @@ sslamr_simulate(
 \item{candidates}{List of candidate compounds included in the mixture.}
 
 \item{isoinfo}{Custom element isotope information that either replaces or
-adds to the definitions in \code{\link[=ecipex]{ecipex()}}.}
+adds to the definitions in \code{\link[ecipex:ecipex]{ecipex::ecipex()}}.}
 
 \item{mc_cal_error}{Mass/charge calibration error. This error is assumed to
 be systematic and is added directly to the mass/charge values for all peaks.}
