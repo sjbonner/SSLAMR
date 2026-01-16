@@ -117,7 +117,6 @@ greedy_fit_2 <- function(spectrum = NULL,
                          replace_isoinfo = FALSE,
                          min_abundance = .001,
                          group_formula = NULL,
-                         group_pattern= TRUE,
                          pattern_tol = .05,
                          binning = TRUE,
                          epsilon = .05,
@@ -370,17 +369,7 @@ greedy_fit_2 <- function(spectrum = NULL,
     }
   }
   
-  # Group candidates with similar isotope patterns
-  if(group_pattern){
-    output_gpd <- output |> 
-      left_join(data$groups, by = "Name") |> 
-      group_by(Group_Name) |>
-      summarize(Abundance = sum(Abundance)) |> 
-      rename(Name = Group_Name)
-  }
-  
   # Save output
-  write_xlsx(list(Separate = output,
-                  Grouped = output_gpd),
+  write_xlsx(list(coefficeints = output),
              path = xlsx_out)
 }
