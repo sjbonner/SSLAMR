@@ -372,4 +372,6 @@ greedy_fit_2 <- function(spectrum = NULL,
   # Save output
   write_xlsx(list(coefficeints = output),
              path = xlsx_out)
+  
+  return(output)
 }
