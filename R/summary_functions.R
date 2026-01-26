@@ -107,6 +107,8 @@ mixtures_summ <- function(samp_df,
                           groups,
                           min_prob = .0001){
   
+  browser()
+  
   ## Retrieve candidate names from design matrix
   candidate_names <- colnames(design)[-1]
   
@@ -207,37 +209,4 @@ fitted_summ <- function(samp_df, counts){
   return(mu_summ)
 }
 
-candidate_summary <- function(scan.obj, candidate){
-  lipsum <- filter(scan.obj$bg.summ, Name==candidate) %>%
-    mutate(Time=scan.obj$scan.time)
-  
-  return(lipsum)
-}
-
-mass_summary <- function(scan.obj, massID){
-  lipsum <- filter(scan.obj$fit.summ, MassID==massID) %>%
-    mutate(Time=scan.obj$scan.time)
-  
-  return(lipsum)
-}
-
-r_summ <- function(samp_df){
-  samples_r <- samp_df %>%
-    select(Chain, Iteration, r)
-  
-  summ_r <- samples_r %>%
-    summarize(Mean = mean(r, na.rm = TRUE),
-              Median = median(r, na.rm = TRUE),
-              SD = sd(r, na.rm = TRUE),
-              Q2.5 = quantile(r,.025,na.rm = TRUE),
-              Q25 = quantile(r,.25,na.rm = TRUE),
-              Q75 = quantile(r,.75,na.rm = TRUE),
-              Q97.5 = quantile(r,.975,na.rm = TRUE))
-  
-  return(summ_r)
-}
-
-intercept_summary <- function(scan.obj){
-  return(data.frame(scan.obj$int.summ, Time=scan.obj$scan.time))
-}
 
