@@ -42,7 +42,7 @@ intercept_summ <- function(samp_df){
   return(summ_beta0)
 }
 
-beta.gamma_summ <- function(samp_df, design, groups){
+coefficient_summ <- function(samp_df, design, groups){
   
   ## Extract names of candidates
   candidate_names <- colnames(design)[-1]

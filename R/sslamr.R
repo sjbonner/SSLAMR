@@ -653,7 +653,7 @@ sslamr <- function(spectrum = NULL,
       
       if(verbose) message("    Summarizing beta and gamma")
       tic() 
-      bg.summ <- beta.gamma_summ(s.df, 
+      coefficient.summ <- coefficient_summ(s.df, 
                                  design = data$design, 
                                  groups = data$groups)
       
@@ -735,7 +735,7 @@ sslamr <- function(spectrum = NULL,
                     convergence = as_tibble(convergence$psrf, rownames = "Parameter"),
                     burnin = b.df,
                     samples = s.df,
-                    coefficients=bg.summ,
+                    coefficients=coefficient.summ,
                     intercept = int.summ,
                     fitted = fit.summ,
                     parameters = parameters,
@@ -758,7 +758,7 @@ sslamr <- function(spectrum = NULL,
     ## Save formatted output to Excel spreadsheet
       if(run_model){
         xlsx_output <- c(results$data,
-                         list(coefficients = bg.summ,
+                         list(coefficients = coefficient.summ,
                               intercept = int.summ,
                               fitted = fit.summ,
                               parameters = parameters,
