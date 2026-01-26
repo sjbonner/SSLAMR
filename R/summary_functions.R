@@ -107,70 +107,47 @@ mixtures_summ <- function(samp_df,
                           groups,
                           min_prob = .0001){
   
-  browser()
-  
   ## Retrieve candidate names from design matrix
   candidate_names <- colnames(design)[-1]
   
-   ## Extract presence indicators
-  gamma <- samp_df |> 
-    filter(Parameter == "gamma") |> 
-    select(Chain, Iteration, Name, Value) 
+  ## Process MCMC output
+  samp_df <- samp_df |> 
+    filter(Parameter %in% c("beta","gamma")) |>
+    pivot_wider(names_from = Parameter, values_from = Value) |> 
+    filter(gamma > 0)
   
-  ## Group presence indicators
-  gamma <- gamma |> 
+  ## Group results
+  group_df <- samp_df |> 
     left_join(groups, by = "Name") |> 
-    select(-Name) |> 
     group_by(Chain, Iteration, Group_Name) |> 
-    summarize(Presence = 1 * (sum(Value) > 0),
-              .groups = "drop") |> 
-    rename(Name = Group_Name)
+    summarize(Name = paste(Name[gamma == 1], collapse = "/"),
+              Abundance = sum(beta),
+              .groups = "drop") 
   
-  ## Extract abundance values
-  beta <- samp_df |> 
-    filter(Parameter == "beta") |> 
-    select(Chain, Iteration, Name, Value) 
-  
-  ## Group abundances
-  beta <- beta |> 
-    left_join(groups, by = "Name") |> 
-    select(-Name) |> 
-    group_by(Chain, Iteration, Group_Name) |> 
-    summarize(Abundance = sum(Value),
-              .groups = "drop") |> 
-    rename(Name = Group_Name)
-  
-  ## Label mixtures using dplyr's default sorting
-  mixtures1 <- gamma |> 
-    pivot_wider(names_from = Name, values_from = Presence) |> 
-    group_by(across(-c(Chain, Iteration))) |> 
-    mutate(Label = cur_group_id()) |> 
+  ## Identify mixtures
+  group_df <- group_df |> 
+    group_by(Name) |> 
+    mutate(Group_ID = cur_group_id()) |> 
     ungroup() |> 
-    select(Chain, Iteration, Label)
+    group_by(Chain,Iteration) |> 
+    mutate(Mixture_Raw = paste(sort(Group_ID), collapse = "/"))
   
-  gamma <- mixtures1 |> 
-    full_join(gamma, by = c("Chain","Iteration"))
-  
-  ## Compute occurrences and proportions for each unique mixture
-  mixtures1 <- mixtures1 |>  
-    group_by(across(-c(Chain, Iteration))) |>
+  ## Compute occurrences and proportions for each mixture
+  mixtures <- group_df |>  
+    group_by(Mixture_Raw) |>
     summarize(n=n(),.groups = "drop") |> 
-    mutate(p = n/sum(n))
-  
-  ## Relabel in descending order of occurrence
-  mixtures1 <- mixtures1 |>
+    mutate(p = n/sum(n)) |> 
     arrange(desc(p)) |> 
     rowid_to_column(var = "Mixture")
   
-  ## Combine proportions, presence, and abundance
-  mixtures2 <- mixtures1 |> 
-    full_join(gamma, by = "Label") |> 
-    left_join(beta, by = c("Chain","Iteration","Name")) |> 
-    select(-Chain, -Iteration, - Label)
-  
+  ## Label mixtures in grouped output
+  group_df <- group_df |> 
+    full_join(mixtures, by = c("Mixture_Raw")) |> 
+    select(-Mixture_Raw,-n)
+
   ## Compute summaries
-  mixtures2 |> 
-    filter(p > min_prob, Presence > 0) |> 
+  group_df |> 
+    filter(p > min_prob) |> 
     group_by(Mixture, p, Name) |> 
     summarise(Mean = mean(Abundance),
               Median = median(Abundance),

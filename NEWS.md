@@ -1,3 +1,12 @@
+# SSLAMR 0.1.15 (January 26, 2026)
+
+* Fixed bug with labelling of groups within mixtures. Group names were based on
+the similarity of the candidates isotope patterns regardless of whether or not
+a specific candidate was present on a given iteration of the MCMC sampler.
+Groups are still identified in the same way, but the group names on each iteration
+are formed by concatenating the names of only those candidates that are present 
+in the mixture.
+
 # SSLAMR 0.1.14 (January 16, 2026)
 
 * Happy New Year!
