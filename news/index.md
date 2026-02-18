@@ -1,5 +1,11 @@
 # Changelog
 
+## SSLAMR 0.1.16 (Febraury 18, 2026)
+
+- Added `metric` argument to greedy algorithm. This allows for the order
+  in which candidates are selected to be based on either the smallest
+  p-value or the largest abundance.
+
 ## SSLAMR 0.1.15 (January 26, 2026)
 
 - Fixed bug with labelling of groups within mixtures. Group names were
