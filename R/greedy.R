@@ -127,6 +127,7 @@ greedy_fit_2 <- function(spectrum = NULL,
                          prescreen = 0,
                          prescreen_prior = 1,
                          prescreen_weight = FALSE,
+                         metric = c("p-value","abundance"),
                          critical = .05,
                          xlsx_out = NULL,
                          verbose = TRUE){
@@ -151,6 +152,9 @@ greedy_fit_2 <- function(spectrum = NULL,
     as_tibble() |> 
     mutate(across(everything(), as.character)) |>
     pivot_longer(everything(), names_to = "Argument", values_to = "Value")
+  
+  # Determine ranking metric
+  metric <- match.arg(metric)
   
   # Add SSLAMR version
   parameters <- tibble(Argument = "SSLAMR Version", 
@@ -332,10 +336,19 @@ greedy_fit_2 <- function(spectrum = NULL,
       mutate(Total = sum(Count)) |> 
       summarize(greedy_fit_single(first(Name), Proportion, Count[Interval]),
                 .groups = "drop") |> 
-      filter(Abundance > 0) |>
-      arrange(`p-value`)
+      filter(Abundance > 0, `p-value` < critical)
     
-    if(fits$`p-value`[1] < critical){
+    # Arrange by chosen metric
+    if(metric == "p-value"){
+      fits <- fits |> 
+        arrange(`p-value`)
+    }
+    else if(metric == "abundance"){
+      fits <- fits |> 
+        arrange(desc(Abundance))
+    }
+    
+    if(nrow(fits) > 0){
       
       # Save fit information
       results <- results |> 
