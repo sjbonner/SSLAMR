@@ -13,7 +13,7 @@ simultaneously identify and quantify compounds of interest within a sample."></h
 
     <a class="navbar-brand me-2" href="../index.html">SSLAMR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.13</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.15</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -114,16 +114,16 @@ information. (character or dataframe)</p></dd>
 
 <dt id="arg-isoinfo">isoinfo<a class="anchor" aria-label="anchor" href="#arg-isoinfo"></a></dt>
 <dd><p>Custom element isotope information that either replaces or
-adds to the definitions in <code>ecipex()</code> (see replace_isoinfo). May be a
+adds to the definitions in <code><a href="https://rdrr.io/pkg/ecipex/man/ecipex.html" class="external-link">ecipex::ecipex()</a></code> (see replace_isoinfo). May be a
 string specifying the path to the data file or an existing data frame. See
 Input Details for further information. (character or dataframe)</p></dd>
 
 
 <dt id="arg-replace-isoinfo">replace_isoinfo<a class="anchor" aria-label="anchor" href="#arg-replace-isoinfo"></a></dt>
 <dd><p>If TRUE then the information in <code>isoinfo</code> replaces the
-data on the ratios of the elemental isotopes used by <code>ecipex()</code>. This
+data on the ratios of the elemental isotopes used by <code><a href="https://rdrr.io/pkg/ecipex/man/ecipex.html" class="external-link">ecipex::ecipex()</a></code>. This
 overrides the default isotope ratios. Otherwise, the information in
-<code>isoinfo</code> is appended to the data used by <code>ecipex()</code>. (boolean)</p></dd>
+<code>isoinfo</code> is appended to the data used by <code><a href="https://rdrr.io/pkg/ecipex/man/ecipex.html" class="external-link">ecipex::ecipex()</a></code>. (boolean)</p></dd>
 
 
 <dt id="arg-min-abundance">min_abundance<a class="anchor" aria-label="anchor" href="#arg-min-abundance"></a></dt>
@@ -310,7 +310,7 @@ candidates.</p></li>
 
 <p>The <code>isotope_data</code> may either be <code>NULL</code> (default), a string, or a data
 frame. If <code>NULL</code> then the relative abundances for the isotope of the
-candidates are computed with the <code>ecipex()</code> function. If a string then it
+candidates are computed with the <code><a href="https://rdrr.io/pkg/ecipex/man/ecipex.html" class="external-link">ecipex::ecipex()</a></code> function. If a string then it
 is interpreted as the path to a file containing the processed isotope data
 and is read with <code><a href="read_any.html">read_any()</a></code>. Otherwise, it is assumed to be a data frame.
 The data must contain five columns: <code>ID</code>, <code>Charge</code>, <code>Isotope</code>, <code>Mass</code>, and

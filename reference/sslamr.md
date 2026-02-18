@@ -75,16 +75,21 @@ sslamr(
 - isoinfo:
 
   Custom element isotope information that either replaces or adds to the
-  definitions in `ecipex()` (see replace_isoinfo). May be a string
-  specifying the path to the data file or an existing data frame. See
-  Input Details for further information. (character or dataframe)
+  definitions in
+  [`ecipex::ecipex()`](https://rdrr.io/pkg/ecipex/man/ecipex.html) (see
+  replace_isoinfo). May be a string specifying the path to the data file
+  or an existing data frame. See Input Details for further information.
+  (character or dataframe)
 
 - replace_isoinfo:
 
   If TRUE then the information in `isoinfo` replaces the data on the
-  ratios of the elemental isotopes used by `ecipex()`. This overrides
-  the default isotope ratios. Otherwise, the information in `isoinfo` is
-  appended to the data used by `ecipex()`. (boolean)
+  ratios of the elemental isotopes used by
+  [`ecipex::ecipex()`](https://rdrr.io/pkg/ecipex/man/ecipex.html). This
+  overrides the default isotope ratios. Otherwise, the information in
+  `isoinfo` is appended to the data used by
+  [`ecipex::ecipex()`](https://rdrr.io/pkg/ecipex/man/ecipex.html).
+  (boolean)
 
 - min_abundance:
 
@@ -280,9 +285,10 @@ contained in an external file or passed as an existing data frame):
 
 The `isotope_data` may either be `NULL` (default), a string, or a data
 frame. If `NULL` then the relative abundances for the isotope of the
-candidates are computed with the `ecipex()` function. If a string then
-it is interpreted as the path to a file containing the processed isotope
-data and is read with
+candidates are computed with the
+[`ecipex::ecipex()`](https://rdrr.io/pkg/ecipex/man/ecipex.html)
+function. If a string then it is interpreted as the path to a file
+containing the processed isotope data and is read with
 [`read_any()`](https://sjbonner.github.io/SSLAMR/reference/read_any.md).
 Otherwise, it is assumed to be a data frame. The data must contain five
 columns: `ID`, `Charge`, `Isotope`, `Mass`, and `Abund`.

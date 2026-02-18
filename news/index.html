@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SSLAMR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.13</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.15</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,6 +31,15 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.15" id="sslamr-0115-january-26-2026">SSLAMR 0.1.15 (January 26, 2026)<a class="anchor" aria-label="anchor" href="#sslamr-0115-january-26-2026"></a></h2>
+<ul><li>Fixed bug with labelling of groups within mixtures. Group names were based on the similarity of the candidates isotope patterns regardless of whether or not a specific candidate was present on a given iteration of the MCMC sampler. Groups are still identified in the same way, but the group names on each iteration are formed by concatenating the names of only those candidates that are present in the mixture.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.14" id="sslamr-0114-january-16-2026">SSLAMR 0.1.14 (January 16, 2026)<a class="anchor" aria-label="anchor" href="#sslamr-0114-january-16-2026"></a></h2>
+<ul><li>Happy New Year!</li>
+<li>Re-implement grouping based on isotope pattern for the greedy algorithm. Some candidates were being included in groups even if their parents weren’t included. This should not be allowed.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.12" id="sslamr-0112-may-8-2025">SSLAMR 0.1.12 (May 8, 2025)<a class="anchor" aria-label="anchor" href="#sslamr-0112-may-8-2025"></a></h2>
 <ul><li>Incorporated grouping of the candidates into the greedy algorithm. This avoids overpenalizing the greedy algorithm when it fits one candidate out of a group and discards the rest.</li>

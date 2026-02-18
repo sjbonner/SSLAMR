@@ -21,7 +21,6 @@ sslamr_data(
   prescreen_prior = NULL,
   prescreen_weight = FALSE,
   rounding = "nearest",
-  group_pattern = TRUE,
   pattern_tol = 0.05,
   ran.seed = unclass(Sys.time()),
   isoinfo = NULL,

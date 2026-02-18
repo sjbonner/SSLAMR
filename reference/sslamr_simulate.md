@@ -26,7 +26,8 @@ sslamr_simulate(
 - isoinfo:
 
   Custom element isotope information that either replaces or adds to the
-  definitions in `ecipex()`.
+  definitions in
+  [`ecipex::ecipex()`](https://rdrr.io/pkg/ecipex/man/ecipex.html).
 
 - mc_cal_error:
 

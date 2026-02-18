@@ -1,5 +1,21 @@
 # Changelog
 
+## SSLAMR 0.1.15 (January 26, 2026)
+
+- Fixed bug with labelling of groups within mixtures. Group names were
+  based on the similarity of the candidates isotope patterns regardless
+  of whether or not a specific candidate was present on a given
+  iteration of the MCMC sampler. Groups are still identified in the same
+  way, but the group names on each iteration are formed by concatenating
+  the names of only those candidates that are present in the mixture.
+
+## SSLAMR 0.1.14 (January 16, 2026)
+
+- Happy New Year!
+- Re-implement grouping based on isotope pattern for the greedy
+  algorithm. Some candidates were being included in groups even if their
+  parents weren’t included. This should not be allowed.
+
 ## SSLAMR 0.1.12 (May 8, 2025)
 
 - Incorporated grouping of the candidates into the greedy algorithm.
