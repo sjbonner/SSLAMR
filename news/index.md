@@ -1,5 +1,15 @@
 # Changelog
 
+## SSLAMR 0.1.17 (May 20, 2026)
+
+- Added two new arguments to the simulation. 1) `vif` allows data to be
+  simulated from negative binomial distributions. This parameter
+  represents the ratio of the variance to the mean and must be greater
+  than or equal to 1. If equal to 1, then counts are Poisson. 2)
+  `saturation` mimics saturation of the sensor. If finite, then the
+  counts are truncated to this value. The argument must be greater than
+  or equal to 1.
+
 ## SSLAMR 0.1.16 (Febraury 18, 2026)
 
 - Added `metric` argument to greedy algorithm. This allows for the order

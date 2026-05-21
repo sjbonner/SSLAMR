@@ -12,13 +12,13 @@
 ## Citation
 
 Bonner S, Walker B, Cao S (2026). *SSLAMR: Spike and SLab Analysis of
-Mass-spectra in R*. R package version 0.1.16,
+Mass-spectra in R*. R package version 0.1.17,
 <https://sjbonner.github.io/SSLAMR/>.
 
     @Manual{,
       title = {SSLAMR: Spike and SLab Analysis of Mass-spectra in R},
       author = {Simon Bonner and Braedan Walker and Shi Yu Cao},
       year = {2026},
-      note = {R package version 0.1.16},
+      note = {R package version 0.1.17},
       url = {https://sjbonner.github.io/SSLAMR/},
     }
