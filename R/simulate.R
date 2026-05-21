@@ -78,7 +78,7 @@ sslamr_simulate <- function(candidates,
     assign_to_bins(bins) %>%
     group_by(Interval) %>%
     summarize(Mass = round(sum(Mass * Count)/sum(Count),5),
-              Count = sum(Count)) %>%
+              Count = pmin(sum(Count), saturation)) %>%
     arrange(Mass)
   
   # Return spectrum
