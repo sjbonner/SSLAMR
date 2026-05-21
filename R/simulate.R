@@ -11,6 +11,13 @@
 #' @param intercept Mean count of the noise per amu.
 #' @param mc_min Lower bound of the mass/charge window.
 #' @param mc_max Upper bound of the mass/charge window.
+#' @param vif Variance inflation factor, the ratio of the mean abundance to the
+#'   variance. If `vif=1`, the default, then counts are generate from Poisson distributions. 
+#'   Otherwise, counts are generated from negative binomials with vif defining
+#'   the ratio of the mean and variance. 
+#' @param saturation If finite, then counts are truncated to be no greater than
+#'   this value to mimic saturation of the sensor. Defaults to `Inf` so that
+#'   no saturation occurs.
 #'
 #' @returns A tibble with the simulated mass spectrum containing columns for 
 #'    the mass/charge ratio and intensity. 
@@ -25,7 +32,16 @@ sslamr_simulate <- function(candidates,
                             mc_min_diff,
                             intercept,
                             mc_min,
-                            mc_max){
+                            mc_max,
+                            vif = 1,
+                            saturation = Inf){
+  
+  # Check arguments
+  if(vif < 1)
+    stop("The variance inflation factor (vif) must be at least 1.\n")
+  
+  if(saturation < 1)
+    stop("The maximum count (saturation) must be at least 1.\n")
   
   # Generate isotope information
   isotopes <- candidate_info(candidates, isoinfo = isoinfo)
@@ -34,8 +50,10 @@ sslamr_simulate <- function(candidates,
   spectrum <- candidates %>%
     select(ID = Name, Abundance) %>%
     full_join(isotopes, by = "ID") %>%
-    group_by(ID, ) %>%
-    mutate(Count = rpois(n(),Abundance * Abund/sum(Abund))) %>%
+    group_by(ID) %>%
+    mutate(prob = 1/vif,
+           size = Abundance * Abund/sum(Abund) * prob/(1-prob),
+           Count = rnbinom(n(), size = size, prob = prob)) %>%
     ungroup() %>%
     filter(Count > 0)
   
