@@ -47,16 +47,30 @@ sslamr_simulate <- function(candidates,
   isotopes <- candidate_info(candidates, isoinfo = isoinfo)
   
   # Generate counts
-  spectrum <- candidates %>%
-    select(ID = Name, Abundance) %>%
-    full_join(isotopes, by = "ID") %>%
-    group_by(ID) %>%
-    mutate(prob = 1/vif,
-           size = Abundance * Abund/sum(Abund) * prob/(1-prob),
-           Count = rnbinom(n(), size = size, prob = prob)) %>%
-    ungroup() %>%
-    filter(Count > 0)
-  
+  if(vif > 1){
+    # Simulate from negative binomial
+    spectrum <- candidates %>%
+      select(ID = Name, Abundance) %>%
+      full_join(isotopes, by = "ID") %>%
+      group_by(ID) %>%
+      mutate(mu = Abundance * Abund/sum(Abund),
+             beta = vif - 1,
+             lambda = rgamma(n(), shape = mu/beta, scale = beta),
+             Count = rpois(n(), lambda)) %>%
+      ungroup() %>%
+      filter(Count > 0)
+  }
+  else{
+    # Simulate from Poisson
+    spectrum <- candidates %>%
+      select(ID = Name, Abundance) %>%
+      full_join(isotopes, by = "ID") %>%
+      group_by(ID) %>%
+      mutate(mu = Abundance * Abund/sum(Abund),
+             Count = rpois(n(), mu)) %>%
+      ungroup() %>%
+      filter(Count > 0)
+  }  
   # Add MC error
   spectrum <- spectrum %>%
     mutate(Mass = Mass + mc_cal_error + rnorm(n(), 0, mc_sd))
