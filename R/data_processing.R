@@ -197,6 +197,7 @@ sslamr_data <- function(spectrum,
                         skip_isotopes = 0,
                         epsilon=0.05, 
                         binning = TRUE,
+                        no_small_bins = FALSE,
                         min_mass_charge = NULL,
                         max_mass_charge = NULL,
                         prior_par = NULL,
@@ -253,6 +254,33 @@ sslamr_data <- function(spectrum,
                                max_mass_charge = max_mass_charge)
   }
   
+  if(no_small_bins){
+    # Remove any bins of width less than epsilon by merging neighbouring bins
+    intervals <- intervals |> 
+      mutate(small = (Width < epsilon),
+             Interval1 = Interval - small) |> 
+      group_by(Interval1) |> 
+      summarize(Interval = max(Interval),
+                Isotopes = sum(Isotopes),
+                Lower = min(Lower),
+                Upper = max(Upper),
+                Mass = (Lower + Upper)/2,
+                Width = Upper - Lower,
+                small = max(small),
+                .groups = "drop") |> 
+      mutate(Interval2 = Interval + small) |> 
+      group_by(Interval2) |> 
+      summarize(n=n(),
+                Isotopes = sum(Isotopes),
+                Lower = min(Lower),
+                Upper = max(Upper),
+                Mass = (Lower + Upper)/2,
+                Width = Upper - Lower,
+                 .groups = "drop") |> 
+      select(-Interval2) |> 
+      arrange(Mass) |> 
+      rowid_to_column(var = "Interval")
+  }
 
   
   # 3) Assign isotopes to bins
