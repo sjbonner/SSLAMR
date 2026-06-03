@@ -205,7 +205,6 @@ sslamr_data <- function(spectrum,
                         prescreen_prior = NULL,
                         prescreen_weight = FALSE,
                         rounding = "nearest",
-                        pattern_tol = .05,
                         ran.seed=unclass(Sys.time()),
                         isoinfo = NULL,
                         verbose = FALSE){

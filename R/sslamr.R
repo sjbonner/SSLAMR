@@ -575,7 +575,6 @@ sslamr <- function(spectrum = NULL,
                         prescreen_prior = prescreen_prior,
                         prescreen_weight = prescreen_weight,
                         rounding = rounding,
-                        pattern_tol = pattern_tol,
                         isoinfo = isoinfo,
                         verbose = verbose)
     toc_out <- toc(quiet = !verbose)
