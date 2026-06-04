@@ -1,18 +1,14 @@
-sslamr_summarize <- function(model,
+sslamr_summarize <- function(burnin,
+                             samples,
                              data,
+                             timing = tibble(Stage = character(), Time = numeric()),
+                             model,
+                             n.adapt,
+                             n.burnin,
                              group_pattern,
-                             pattern_tol){
-  # Convert burnin to data frame
-  b.df <- get_samples_df(model$burnin)
-  
-  # Convert samples to a data frame
-  s.df <- get_samples_df(model$samples) %>%
-    pivot_longer(-c(Chain,Iteration),names_to = "Parameter",values_to = "Value") %>%
-    mutate(ID = ifelse(Parameter %in% c("beta0","beta_tmp_sd"), NA, 
-                       as.integer(str_extract(Parameter,"[0-9]+"))),
-           Parameter = ifelse(Parameter %in% c("beta0","beta_tmp_sd"), Parameter,
-                              str_extract(Parameter,"[a-z]+"))) %>%
-    mutate(Name = ifelse(Parameter %in% c("beta","gamma"),colnames(data$design)[ID+1],NA))
+                             pattern_tol,
+                             mixtures = FALSE,
+                             verbose = TRUE){
   
   # results
   if(verbose) message("Summarizing results...")
@@ -20,10 +16,10 @@ sslamr_summarize <- function(model,
   # Identify groups by pattern
   if(group_pattern){
     if(verbose)
-      message("   Identyfing similar isotope patterns...")
+      message("    Identifying similar isotope patterns...")
     
     # Remove candidates which never appear
-    not_present <- s.df |> 
+    not_present <- samples |> 
       filter(Parameter == "gamma") |> 
       group_by(Name,ID) |> 
       summarize(Any = any(Value > 0),
@@ -35,7 +31,7 @@ sslamr_summarize <- function(model,
                                tol = pattern_tol)
     
     # Recombine
-    data$groups <- groups |>
+    groups <- groups |>
       select(-Group_ID) |> 
       bind_rows(tibble(Name = not_present |> pull("Name"),
                        Group_Name = not_present |> pull("Name"))) |> 
@@ -45,18 +41,19 @@ sslamr_summarize <- function(model,
   }
   else{
     # Assign each candidate to its own group
-    data$groups <- tibble(Name = colnames(design)) |> 
+    groups <- tibble(Name = colnames(design)) |> 
       mutate(Group_ID = 1:n(),
              Group_Name = Name)
   }
   
   if(verbose) message("    Summarizing beta and gamma")
   tic() 
-  coefficient.summ <- coefficient_summ(s.df, 
+  coefficient.summ <- coefficient_summ(samples, 
                                        design = data$design, 
-                                       groups = data$groups)
+                                       groups = groups)
   
   toc_out <- toc(quiet = !verbose)
+  
   timing <- timing |> 
     add_row(Stage = "Summarizing beta and gamma",
             Time = toc_out$toc - toc_out$tic)
@@ -65,9 +62,9 @@ sslamr_summarize <- function(model,
     if(verbose) message("    Summarizing mixtures... be patient...")
     tic() 
     mixtures.summ <- mixtures_summ(
-      samp_df = s.df, 
+      samp_df = samples, 
       design = data$design,
-      groups = data$groups)
+      groups = groups)
     
     toc_out <- toc(quiet = !verbose)
     timing <- timing |> 
@@ -78,7 +75,7 @@ sslamr_summarize <- function(model,
   if(model == "hierarchical"){
     if(verbose) message("    Computing standard deviations")
     tic() 
-    beta_sd.summ <- beta_sd_summ(s.df)
+    beta_sd.summ <- beta_sd_summ(samples)
     toc_out <- toc(quiet = !verbose)
     timing <- timing |>
       add_row(Stage = "Computing standard deviations",
@@ -87,7 +84,7 @@ sslamr_summarize <- function(model,
   
   if(verbose) message("    Summarizing intercept")
   tic() 
-  int.summ <- intercept_summ(s.df)
+  int.summ <- intercept_summ(samples)
   toc_out <- toc(quiet = !verbose)
   timing <- timing |>
     add_row(Stage = "Summarizing intercept",
@@ -95,46 +92,14 @@ sslamr_summarize <- function(model,
   
   if(verbose) message("    Summarizing fitted values")
   tic() 
-  fit.summ <- fitted_summ(s.df, data$counts)
+  fit.summ <- fitted_summ(samples, data$counts)
   toc_out <- toc(quiet = !verbose)
   timing <- timing |>
     add_row(Stage = "Summarizing fitted values",
             Time = toc_out$toc - toc_out$tic)
   
-  # Convergence diagnostics
-  if(verbose) message("Computing convergence diagnostics...")
-  tic() 
-  
-  index <- grep("mu",colnames(model$samples[[1]]))
-  
-  mu_burnin <- model$burnin[,index] |> 
-    window(start = n.adapt + floor(n.burnin/2))
-  
-  convergence <- coda::gelman.diag(mu_burnin,
-                                   multivariate = FALSE)
-  
-  # effective sizes
-  mu_samples <- lapply(model$samples,function(mcmc){
-    index <- grep("mu",colnames(model$samples[[1]]))
-    mcmc[,index]
-  })
-  
-  eff.size <- coda::effectiveSize(mu_samples)
-  
-  fit.summ <- as_tibble(cbind(fit.summ, EffectiveSize=eff.size))
-  toc_out <- toc(quiet = !verbose)
-  timing <- timing |>
-    add_row(Stage = "Computing convergence diagnostics",
-            Time = toc_out$toc - toc_out$tic)
-}
-
-# package results
-if(run_model){
-  results <- list(data=data,
-                  convergence = as_tibble(convergence$psrf, rownames = "Parameter"),
-                  burnin = b.df,
-                  samples = s.df,
-                  coefficients=coefficient.summ,
+  # Package results
+  results <- list(coefficients=coefficient.summ,
                   intercept = int.summ,
                   fitted = fit.summ,
                   parameters = parameters,
@@ -143,76 +108,13 @@ if(run_model){
   if(mixtures)
     results$mixtures <- mixtures.summ
   
-  if(model == "hierarchical"){
+  if(model == "hierarchical")
     results$beta_sd <- beta_sd.summ
-    
-  }
-}
-else {
-  results <- list(data = data,
-                  parameters = parameters)
+  
+  # Return output
+  return(results)
 }
 
-if(!is.null(xlsx_out)){
-  ## Save formatted output to Excel spreadsheet
-  if(run_model){
-    xlsx_output <- c(results$data,
-                     list(coefficients = coefficient.summ,
-                          intercept = int.summ,
-                          fitted = fit.summ,
-                          parameters = parameters,
-                          convergence = as_tibble(convergence$psrf, rownames = "Parameter"),
-                          timing = timing))
-    
-    if(mixtures)
-      xlsx_output$mixtures <- mixtures.summ
-    
-    if(model == "hierarchical")
-      xlsx_output$beta_sd <- beta_sd.summ
-  }
-  else{
-    xlsx_output <- c(results$data,
-                     list(parameters = parameters))
-  }
-  
-  write_xlsx(xlsx_output,xlsx_out)
-}
-}
-
-else{
-  # Reload existing results
-  
-  # Check for output file
-  if(is.null(xlsx_out))
-    stop("Please supply the name of an output file.")
-  
-  if(!file.exists(xlsx_out))
-    stop("The file ",xlsx_out,"does not exist.")
-  
-  # Retrieve base output objects
-  results <- list(data = list(candidates = read_xlsx(xlsx_out,sheet = "candidates"),
-                              intervals = read_xlsx(xlsx_out,sheet = "intervals"),
-                              spectrum = read_xlsx(xlsx_out,sheet = "spectrum"),
-                              design = read_xlsx(xlsx_out,sheet = "design"),
-                              counts = read_xlsx(xlsx_out,sheet = "counts")),
-                  coefficients = read_xlsx(xlsx_out,sheet = "coefficients"),
-                  intercept = read_xlsx(xlsx_out,sheet = "intercept"),
-                  fitted = read_xlsx(xlsx_out,sheet = "fitted"),
-                  parameters = read_xlsx(xlsx_out,sheet = "parameters"),
-                  convergence = read_xlsx(xlsx_out,sheet = "convergence"),
-                  timing = read_xlsx(xlsx_out,sheet = "timing"))
-  
-  # Retrieve optional output objects
-  if("beta_sd" %in% excel_sheets(xlsx_out))
-    results$beta_sd <- read_xlsx(xlsx_out,sheet = "beta_sd")
-  
-  if("mixtures" %in% excel_sheets(xlsx_out))
-    results$mixtures <- read_xlsx(xlsx_out,sheet = "mixtures")
-}
-
-# Return output
-return(results)
-}
 get_samples_df <- function(samples){
   sample_df <- lapply(1:length(samples),function(k){
     as_tibble(samples[[k]]) %>%
