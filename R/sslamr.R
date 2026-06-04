@@ -384,6 +384,7 @@ sslamr_sample <- function(data,
 #'   * `intercept` (ro)
 #'   * `fitted` (ro)
 #'   * `parameters` (ro)
+#'   * `timing` (ro)
 #' @export
 #'
 #' @examples
