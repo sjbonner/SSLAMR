@@ -590,7 +590,7 @@ sslamr <- function(spectrum = NULL,
     if(run_model){
       if(verbose) message("Running sampler...")
       tic()
-      ss.model <- sslamr_sample(data,
+      sslamr_fit <- sslamr_sample(data,
                                 n.adapt = n.adapt,
                                 n.chains = n.chains,
                                 n.burnin = n.burnin,
@@ -605,10 +605,10 @@ sslamr <- function(spectrum = NULL,
                 Time = toc_out$toc - toc_out$tic)
       
       # Convert burnin to data frame
-      b.df <- get_samples_df(ss.model$burnin)
+      burnin <- get_samples_df(sslamr_fit$burnin)
       
       # Convert samples to a data frame
-      s.df <- get_samples_df(ss.model$samples) %>%
+      samples <- get_samples_df(sslamr_fit$samples) %>%
         pivot_longer(-c(Chain,Iteration),names_to = "Parameter",values_to = "Value") %>%
         mutate(ID = ifelse(Parameter %in% c("beta0","beta_tmp_sd"), NA, 
                            as.integer(str_extract(Parameter,"[0-9]+"))),
@@ -620,17 +620,17 @@ sslamr <- function(spectrum = NULL,
       if(verbose) message("Computing convergence diagnostics...")
       tic() 
       
-      index <- grep("mu",colnames(ss.model$samples[[1]]))
+      index <- grep("mu",colnames(sslamr_fit$samples[[1]]))
       
-      mu_burnin <- ss.model$burnin[,index] |> 
+      mu_burnin <- sslamr_fit$burnin[,index] |> 
         window(start = n.adapt + floor(n.burnin/2))
       
       gelman_diag <- coda::gelman.diag(mu_burnin,
                                        multivariate = FALSE)
       
       # effective sizes
-      mu_samples <- lapply(ss.model$samples,function(mcmc){
-        index <- grep("mu",colnames(ss.model$samples[[1]]))
+      mu_samples <- lapply(sslamr_fit$samples,function(mcmc){
+        index <- grep("mu",colnames(sslamr_fit$samples[[1]]))
         mcmc[,index]
       })
       
@@ -647,8 +647,8 @@ sslamr <- function(spectrum = NULL,
     }
     
     # Compute posterior summaries
-    summ_list <- sslamr_summarize(burnin = b.df, 
-                                  samples = s.df, 
+    summ_list <- sslamr_summarize(burnin = burnin, 
+                                  samples = samples, 
                                   data = data, 
                                   timing = timing, 
                                   model = model,
@@ -663,8 +663,8 @@ sslamr <- function(spectrum = NULL,
     if(run_model){
       results <- list(data=data,
                       convergence = convergence,
-                      burnin = b.df,
-                      samples = s.df,
+                      burnin = burnin,
+                      samples = samples,
                       timing = timing) |> 
         c(summ_list)
       
