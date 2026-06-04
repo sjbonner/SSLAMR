@@ -603,7 +603,7 @@ sslamr <- function(spectrum = NULL,
       timing <- timing |> 
         add_row(Stage = "Running sampler",
                 Time = toc_out$toc - toc_out$tic)
-
+      
       # Convert burnin to data frame
       b.df <- get_samples_df(ss.model$burnin)
       
@@ -611,97 +611,10 @@ sslamr <- function(spectrum = NULL,
       s.df <- get_samples_df(ss.model$samples) %>%
         pivot_longer(-c(Chain,Iteration),names_to = "Parameter",values_to = "Value") %>%
         mutate(ID = ifelse(Parameter %in% c("beta0","beta_tmp_sd"), NA, 
-                       as.integer(str_extract(Parameter,"[0-9]+"))),
+                           as.integer(str_extract(Parameter,"[0-9]+"))),
                Parameter = ifelse(Parameter %in% c("beta0","beta_tmp_sd"), Parameter,
                                   str_extract(Parameter,"[a-z]+"))) %>%
         mutate(Name = ifelse(Parameter %in% c("beta","gamma"),colnames(data$design)[ID+1],NA))
-      
-      # results
-      if(verbose) message("Summarizing results...")
-      
-      # Identify groups by pattern
-      if(group_pattern){
-        if(verbose)
-          message("   Identyfing similar isotope patterns...")
-        
-        # Remove candidates which never appear
-        not_present <- s.df |> 
-          filter(Parameter == "gamma") |> 
-          group_by(Name,ID) |> 
-          summarize(Any = any(Value > 0),
-                    .groups = "drop") |>
-          filter(!Any)
-          
-        # Group remaining candidates
-        groups <- group_by_pattern(data$design[-c(1,pull(not_present,"ID") + 1)], 
-                                   tol = pattern_tol)
-        
-        # Recombine
-        data$groups <- groups |>
-          select(-Group_ID) |> 
-          bind_rows(tibble(Name = not_present |> pull("Name"),
-                           Group_Name = not_present |> pull("Name"))) |> 
-          arrange(Group_Name) |> 
-          group_by(Group_Name) |>
-          mutate(Group_ID = cur_group_id())
-      }
-      else{
-        # Assign each candidate to its own group
-        data$groups <- tibble(Name = colnames(design)) |> 
-          mutate(Group_ID = 1:n(),
-                 Group_Name = Name)
-      }
-      
-      if(verbose) message("    Summarizing beta and gamma")
-      tic() 
-      coefficient.summ <- coefficient_summ(s.df, 
-                                 design = data$design, 
-                                 groups = data$groups)
-      
-      toc_out <- toc(quiet = !verbose)
-      timing <- timing |> 
-        add_row(Stage = "Summarizing beta and gamma",
-                Time = toc_out$toc - toc_out$tic)
-      
-      if(mixtures){
-        if(verbose) message("    Summarizing mixtures... be patient...")
-        tic() 
-        mixtures.summ <- mixtures_summ(
-          samp_df = s.df, 
-          design = data$design,
-          groups = data$groups)
-        
-        toc_out <- toc(quiet = !verbose)
-        timing <- timing |> 
-          add_row(Stage = "Summarizing mixtures",
-                  Time = toc_out$toc - toc_out$tic)
-      }
-      
-      if(model == "hierarchical"){
-        if(verbose) message("    Computing standard deviations")
-        tic() 
-        beta_sd.summ <- beta_sd_summ(s.df)
-        toc_out <- toc(quiet = !verbose)
-        timing <- timing |>
-          add_row(Stage = "Computing standard deviations",
-                  Time = toc_out$toc - toc_out$tic)
-      }
-      
-      if(verbose) message("    Summarizing intercept")
-      tic() 
-      int.summ <- intercept_summ(s.df)
-      toc_out <- toc(quiet = !verbose)
-      timing <- timing |>
-        add_row(Stage = "Summarizing intercept",
-                Time = toc_out$toc - toc_out$tic)
-      
-      if(verbose) message("    Summarizing fitted values")
-      tic() 
-      fit.summ <- fitted_summ(s.df, data$counts)
-      toc_out <- toc(quiet = !verbose)
-      timing <- timing |>
-        add_row(Stage = "Summarizing fitted values",
-                Time = toc_out$toc - toc_out$tic)
       
       # Convergence diagnostics
       if(verbose) message("Computing convergence diagnostics...")
@@ -712,7 +625,7 @@ sslamr <- function(spectrum = NULL,
       mu_burnin <- ss.model$burnin[,index] |> 
         window(start = n.adapt + floor(n.burnin/2))
       
-      convergence <- coda::gelman.diag(mu_burnin,
+      gelman_diag <- coda::gelman.diag(mu_burnin,
                                        multivariate = FALSE)
       
       # effective sizes
@@ -723,60 +636,65 @@ sslamr <- function(spectrum = NULL,
       
       eff.size <- coda::effectiveSize(mu_samples)
       
-      fit.summ <- as_tibble(cbind(fit.summ, EffectiveSize=eff.size))
+      convergence <- gelman_diag$psrf |> 
+        as_tibble(rownames = "Parameter") |> 
+        add_column(EffectiveSize=eff.size) 
+      
       toc_out <- toc(quiet = !verbose)
       timing <- timing |>
         add_row(Stage = "Computing convergence diagnostics",
                 Time = toc_out$toc - toc_out$tic)
     }
-
-  # package results
-  if(run_model){
-    results <- list(data=data,
-                    convergence = as_tibble(convergence$psrf, rownames = "Parameter"),
-                    burnin = b.df,
-                    samples = s.df,
-                    coefficients=coefficient.summ,
-                    intercept = int.summ,
-                    fitted = fit.summ,
-                    parameters = parameters,
-                    timing = timing)
     
-    if(mixtures)
-      results$mixtures <- mixtures.summ
-    
-    if(model == "hierarchical"){
-      results$beta_sd <- beta_sd.summ
+    # Compute posterior summaries
+    summ_list <- sslamr_summarize(burnin = b.df, 
+                                  samples = s.df, 
+                                  data = data, 
+                                  timing = timing, 
+                                  model = model,
+                                  n.adapt = n.adapt, 
+                                  n.burnin = n.burnin,
+                                  group_pattern = group_pattern,
+                                  pattern_tol = pattern_tol,
+                                  mixtures = mixtures,
+                                  verbose = TRUE)
+      
+    # package results
+    if(run_model){
+      results <- list(data=data,
+                      convergence = convergence,
+                      burnin = b.df,
+                      samples = s.df,
+                      timing = timing) |> 
+        c(summ_list)
       
     }
-  }
-  else {
-    results <- list(data = data,
-                   parameters = parameters)
-  }
+    else {
+      results <- list(data = data,
+                      parameters = parameters)
+    }
     
-  if(!is.null(xlsx_out)){
-    ## Save formatted output to Excel spreadsheet
+    if(!is.null(xlsx_out)){
+      ## Save formatted output to Excel spreadsheet
       if(run_model){
         xlsx_output <- c(results$data,
-                         list(coefficients = coefficient.summ,
-                              intercept = int.summ,
-                              fitted = fit.summ,
-                              parameters = parameters,
-                              convergence = as_tibble(convergence$psrf, rownames = "Parameter"),
-                              timing = timing))
+                         results[c("coefficients",
+                                   "intercept",
+                                   "fitted",
+                                   "parameters",
+                                   "convergence",
+                                   "timing")])
         
         if(mixtures)
-          xlsx_output$mixtures <- mixtures.summ
+          xlsx_output$mixtures <- results$mixtures
         
         if(model == "hierarchical")
-          xlsx_output$beta_sd <- beta_sd.summ
+          xlsx_output$beta_sd <- results$beta_sd
       }
       else{
-        xlsx_output <- c(results$data,
-                         list(parameters = parameters))
+        xlsx_output <- results
       }
-    
+      
       write_xlsx(xlsx_output,xlsx_out)
     }
   }
