@@ -1,3 +1,43 @@
+#' Posterior Summaries for SSLAMR
+#' 
+#' @description Computes posterior summary statistics for SSLAMR, Spike-and-Slab 
+#' Analysis for Mass Spectrometry in R. Inputs to this function are either inputs
+#' to or output from the main function, `sslamr`. This funciton is called 
+#' automatically by `sslamr` but can be called separately to recompute the 
+#' posterior summaries.
+#'
+#' @param burnin Dataframe containing samples generated during the burnin phase.
+#' (dataframe)
+#' @param samples Dataframe containing samples generated after the burnin phase. 
+#' (dataframe)
+#' @param data Processed data list. (list)
+#' @param timing Dataframe containing information on the timing of the data 
+#' processing and MCMC sampling. If null, then a new timing dataframe is created.
+#' Otherwise, the timing of computing the summary statistics is appended. (dataframe)
+#' @param model Identifies the structure of the prior (`simple` or `hierarchical`). (character)
+#' @param n.adapt Number of iterations in MCMC sampler's adapting phase.
+#'   (numeric)
+#' @param n.burnin Number of iterations in MCMC sampler's burn-in phase.
+#'   (numeric)
+#' @param group_pattern If TRUE then candidates with similar isotope pattens are 
+#' grouped when computing posterior summary statistics for presence and 
+#' abundance. (boolean)
+#' @param pattern_tol Tolerance for grouping candidates with similar isotope patterns. 
+#' If `group_pattern` is true then candidates with a maximum difference of their 
+#' isotope patterns less than `pattern_tol` are grouped when computing posterior 
+#' summary statistics for the presence and abundance. (numeric)
+#' @param mixtures If TRUE then summarize information about the sampled 
+#'   mixtures. (boolean)
+#' @param verbose If TRUE then print progress messages. (boolean)
+#'
+#' @returns A list of objects containing the posterior summary statistics. 
+#'   * `coefficients` (ro)
+#'   * `intercept` (ro)
+#'   * `fitted` (ro)
+#'   * `parameters` (ro)
+#' @export
+#'
+#' @examples
 sslamr_summarize <- function(burnin,
                              samples,
                              data,
@@ -10,7 +50,6 @@ sslamr_summarize <- function(burnin,
                              mixtures = FALSE,
                              verbose = TRUE){
   
-  # results
   if(verbose) message("Summarizing results...")
   
   # Identify groups by pattern
