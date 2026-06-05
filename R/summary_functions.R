@@ -31,10 +31,11 @@
 #' @param verbose If TRUE then print progress messages. (boolean)
 #'
 #' @returns A list of objects containing the posterior summary statistics. 
-#'   * `coefficients` (ro)
-#'   * `intercept` (ro)
-#'   * `fitted` (ro)
-#'   * `parameters` (ro)
+#'   * `coefficients` 
+#'   * `intercept` 
+#'   * `fitted`
+#'   * `parameters` 
+#'   * `timing`
 #' @export
 #'
 #' @examples
