@@ -273,7 +273,6 @@ greedy_fit_2 <- function(spectrum = NULL,
                       prescreen_prior = prescreen_prior,
                       prescreen_weight = prescreen_weight,
                       rounding = rounding,
-                      pattern_tol = pattern_tol,
                       isoinfo = isoinfo,
                       verbose = verbose)
   
