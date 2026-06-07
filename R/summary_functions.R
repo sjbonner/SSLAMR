@@ -81,7 +81,7 @@ sslamr_summarize <- function(burnin,
   }
   else{
     # Assign each candidate to its own group
-    groups <- tibble(Name = colnames(design)) |> 
+    groups <- tibble(Name = colnames(data$design)) |> 
       mutate(Group_ID = 1:n(),
              Group_Name = Name)
   }
