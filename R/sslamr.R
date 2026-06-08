@@ -663,6 +663,7 @@ sslamr <- function(spectrum = NULL,
     # package results
     if(run_model){
       results <- list(data=data,
+                      parameters = parameters,
                       convergence = convergence,
                       burnin = burnin,
                       samples = samples,

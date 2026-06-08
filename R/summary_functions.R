@@ -142,7 +142,6 @@ sslamr_summarize <- function(burnin,
   results <- list(coefficients=coefficient.summ,
                   intercept = int.summ,
                   fitted = fit.summ,
-                  parameters = parameters,
                   timing = timing)
   
   if(mixtures)
