@@ -196,7 +196,8 @@ sslamr_sample <- function(data,
   # Burnin phase
   burnin <- coda.samples(jags_model,
                          variable.names = monitor,
-                         n.iter = n.burnin)
+                         n.iter = n.burnin,
+                         thin = n.thin)
   
   # Sampling phase
   samples <- coda.samples(jags_model,
