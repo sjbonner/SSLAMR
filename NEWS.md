@@ -1,3 +1,10 @@
+# SSLAMR 0.1.19 (June 17, 2026)
+
+* Revised convergence metrics. Convergence is now assessed through two factors:
+1) the similarity of the probability of presence across the chains for each 
+candidate and 2) the Brooks-Gelman-Rubin diagnostic for the non-zero beta 
+values for each candidate. 
+
 # SSLAMR 0.1.18 (June 8, 2026)
 
 * Created separate function for computing posterior summaries. This allows 
