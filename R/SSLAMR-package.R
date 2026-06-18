@@ -20,4 +20,8 @@
 #' @importFrom stats sd
 #' @importFrom utils setTxtProgressBar
 #' @importFrom utils txtProgressBar
+#' @importFrom coda as.mcmc
+#' @importFrom coda as.mcmc.list
+#' @importFrom coda gelman.diag
+#' @importFrom coda effectiveSize
 NULL

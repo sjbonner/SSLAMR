@@ -342,4 +342,59 @@ fitted_summ <- function(samp_df, counts){
   return(mu_summ)
 }
 
+bgr_beta <- function(burnin, id, transform = FALSE, min_iter = 100){
+  
+  # Extract burnin for selected value of beta
+  burnin_tmp <- burnin |> 
+    filter(Parameter == "beta", ID == id)
+  
+  # Extract candidate name
+  name <- burnin_tmp |> 
+    head(1) |> 
+    pull("Name")
+  
+  # Log transform values
+  if(transform){
+    burnin_tmp <- burnin_tmp |> 
+      mutate(Value = log(Value))
+  }
+  
+  # Identify minimum number of non-zero values across all chains
+  n_min <- burnin_tmp |> 
+    group_by(Chain) |> 
+    summarize(n = sum(Value > 0)) |> 
+    pull("n") |> 
+    min()
+  
+  if(n_min >= min_iter){
+    
+    # Extract first n_min values from each chain and construct mcmc list object
+    burnin_mcmc <- burnin_tmp |> 
+      filter(Value > 0) |> 
+      group_by(Chain) |> 
+      slice_max(order_by = Iteration, n= n_min) |> 
+      group_map(~ .x |> 
+                  select(Value) |> 
+                  as.mcmc()) |>
+      as.mcmc.list()
+    
+    # Compute Brooks-Gelman-Rubin diagnostic and effective sample size
+    gd <- gelman.diag(burnin_mcmc)$psrf |> 
+      as_tibble() |> 
+      add_column(ID = id, 
+                 Name = name, 
+                 Min_Iter = n_min,
+                 EffectiveSize = effectiveSize(burnin_mcmc),
+                 .before = 1)
+    
+  }
+  else{
+    gd <- tibble(ID = id,
+                 Name = name,
+                 Min_Iter = n_min,
+                 `Point est.` = NA,
+                 `Upper C.I.` = NA,
+                 EffectiveSize = NA)
+  }
+}
 

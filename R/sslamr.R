@@ -606,7 +606,13 @@ sslamr <- function(spectrum = NULL,
                 Time = toc_out$toc - toc_out$tic)
       
       # Convert burnin to data frame
-      burnin <- get_samples_df(sslamr_fit$burnin)
+      burnin <- get_samples_df(sslamr_fit$burnin) %>%
+        pivot_longer(-c(Chain,Iteration),names_to = "Parameter",values_to = "Value") %>%
+        mutate(ID = ifelse(Parameter %in% c("beta0","beta_tmp_sd"), NA, 
+                           as.integer(str_extract(Parameter,"[0-9]+"))),
+               Parameter = ifelse(Parameter %in% c("beta0","beta_tmp_sd"), Parameter,
+                                  str_extract(Parameter,"[a-z]+"))) %>%
+        mutate(Name = ifelse(Parameter %in% c("beta","gamma"),colnames(data$design)[ID+1],NA))
       
       # Convert samples to a data frame
       samples <- get_samples_df(sslamr_fit$samples) %>%
@@ -621,26 +627,24 @@ sslamr <- function(spectrum = NULL,
       if(verbose) message("Computing convergence diagnostics...")
       tic() 
       
-      index <- grep("mu",colnames(sslamr_fit$samples[[1]]))
+      convergence_gamma <- burnin |> 
+        filter(Parameter == "gamma") |> 
+        group_by(ID,Name,Chain) |> 
+        summarize(P_present = mean(Value),
+                  .groups = "drop") |> 
+        group_by(ID,Name) |> 
+        summarize(P_present_diff = max(P_present) - min(P_present))
+        
+      convergence_beta <- burnin |> 
+        filter(Parameter == "beta", !is.na(ID)) |> 
+        pull("ID") |> 
+        unique() |> 
+        lapply(bgr_beta, burnin = burnin, transform = TRUE) |> 
+        bind_rows()
       
-      mu_burnin <- sslamr_fit$burnin[,index] |> 
-        window(start = n.adapt + floor(n.burnin/2))
-      
-      gelman_diag <- coda::gelman.diag(mu_burnin,
-                                       multivariate = FALSE)
-      
-      # effective sizes
-      mu_samples <- lapply(sslamr_fit$samples,function(mcmc){
-        index <- grep("mu",colnames(sslamr_fit$samples[[1]]))
-        mcmc[,index]
-      })
-      
-      eff.size <- coda::effectiveSize(mu_samples)
-      
-      convergence <- gelman_diag$psrf |> 
-        as_tibble(rownames = "Parameter") |> 
-        add_column(EffectiveSize=eff.size) 
-      
+      convergence <- convergence_beta |> 
+        left_join(convergence_gamma, by = c("ID","Name"))
+
       toc_out <- toc(quiet = !verbose)
       timing <- timing |>
         add_row(Stage = "Computing convergence diagnostics",
