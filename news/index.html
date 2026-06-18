@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SSLAMR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.17</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.19</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,8 +32,17 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.19" id="sslamr-0119-june-17-2026">SSLAMR 0.1.19 (June 17, 2026)<a class="anchor" aria-label="anchor" href="#sslamr-0119-june-17-2026"></a></h2>
+<ul><li>Revised convergence metrics. Convergence is now assessed through two factors:</li>
+</ul><ol style="list-style-type: decimal"><li>the similarity of the probability of presence across the chains for each candidate and 2) the Brooks-Gelman-Rubin diagnostic for the non-zero beta values for each candidate.</li>
+</ol></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.18" id="sslamr-0118-june-8-2026">SSLAMR 0.1.18 (June 8, 2026)<a class="anchor" aria-label="anchor" href="#sslamr-0118-june-8-2026"></a></h2>
+<ul><li>Created separate function for computing posterior summaries. This allows summaries to be computed with different settings from the same MCMC run as long as the samples are saved.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.17" id="sslamr-0117-may-20-2026">SSLAMR 0.1.17 (May 20, 2026)<a class="anchor" aria-label="anchor" href="#sslamr-0117-may-20-2026"></a></h2>
-<ul><li>Added two new arguments to the simulation. 1) <code>vif</code> allows data to be simulated from negative binomial distributions. This parameter represents the ratio of the variance to the mean and must be greater than or equal to 1. If equal to 1, then counts are Poisson. 2) <code>saturation</code> mimics saturation of the sensor. If finite, then the counts are truncated to this value. The argument must be greater than or equal to 1.</li>
+<ul><li>Added two new arguments to the simulation function. 1) <code>vif</code> allows data to be simulated from negative binomial distributions. This parameter represents the ratio of the variance to the mean and must be greater than or equal to 1. If equal to 1, then counts are Poisson. 2) <code>saturation</code> mimics saturation of the sensor. If finite, then the counts are truncated to this value. The argument must be greater than or equal to 1.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.16" id="sslamr-0116-febraury-18-2026">SSLAMR 0.1.16 (Febraury 18, 2026)<a class="anchor" aria-label="anchor" href="#sslamr-0116-febraury-18-2026"></a></h2>
